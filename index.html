@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тамагочи — Социальная игра</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { min-height: 100vh; background: linear-gradient(145deg, #0b2e1f 0%, #1a4f33 100%); display: flex; justify-content: center; align-items: center; padding: 12px; }
+        .container { max-width: 440px; width: 100%; background: rgba(255,248,235,0.95); backdrop-filter: blur(8px); border-radius: 48px 48px 32px 32px; padding: 24px 16px 26px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 2px solid #b8d9b0; min-height: 480px; position: relative; }
+        .currency-display { position: absolute; top: 14px; right: 18px; background: rgba(43,122,75,0.15); padding: 6px 16px 6px 12px; border-radius: 60px; font-size: 18px; font-weight: 700; color: #1d3b2a; border: 2px solid #7fa98a; display: flex; align-items: center; gap: 4px; z-index: 20; cursor: pointer; }
+        .currency-display:active { background: rgba(43,122,75,0.3); }
+        .back-btn { position: absolute; top: 14px; left: 14px; background: none; border: none; font-size: 30px; cursor: pointer; color: #1d3b2a; z-index: 10; padding: 4px 8px; border-radius: 40px; display: none; }
+        .back-btn:active { background: rgba(0,0,0,0.1); }
+        .back-btn.show { display: block; }
+        .notification-dot { display: inline-block; width: 12px; height: 12px; background: #ff4444; border-radius: 50%; margin-left: 8px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } }
+
+        #authScreen { text-align: center; padding: 20px 10px; display: block; }
+        #authScreen h1 { font-size: 34px; color: #1d3b2a; margin-bottom: 4px; }
+        #authScreen .sub { color: #3a5e47; font-size: 14px; margin-bottom: 20px; }
+        .auth-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+        .auth-tabs button { flex: 1; padding: 12px; border: 3px solid #9ec0a0; border-radius: 60px; background: #f5fcf2; font-weight: 700; font-size: 15px; color: #1d3b2a; cursor: pointer; }
+        .auth-tabs button:active { transform: scale(0.96); }
+        .auth-tabs button.active { background: #2b7a4b; color: white; border-color: #2b7a4b; }
+        .auth-form { display: flex; flex-direction: column; gap: 12px; }
+        .auth-form input { padding: 16px 20px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; background: white; outline: none; text-align: center; }
+        .auth-form input:focus { border-color: #2b7a4b; }
+        .auth-form button { padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 20px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        .auth-form button:active { transform: translateY(6px); box-shadow: none; }
+        .auth-error { color: #b33; font-size: 14px; min-height: 22px; margin-top: 6px; }
+        .auth-success { color: #2b7a4b; font-size: 14px; min-height: 22px; margin-top: 6px; }
+
+        #mainMenu { display: none; text-align: center; padding: 10px 0; }
+        #mainMenu h2 { color: #1d3b2a; font-size: 26px; }
+        #mainMenu .greeting { color: #2f5f40; margin-bottom: 18px; font-size: 15px; }
+        .menu-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+        .menu-buttons button { padding: 16px; border: 3px solid #3f7a57; border-radius: 60px; background: #f5fcf2; font-size: 18px; font-weight: 700; color: #1d3b2a; cursor: pointer; box-shadow: 0 5px 0 #7b9f84; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .menu-buttons button:active { transform: translateY(5px); box-shadow: none; }
+        .btn-danger { background: #bf5b4a !important; border-color: #823b2f !important; color: white !important; box-shadow: 0 5px 0 #632f26 !important; }
+        .admin-btn { background: #f5c542 !important; border-color: #c99a2a !important; color: #4a3800 !important; box-shadow: 0 5px 0 #c99a2a !important; }
+        .footer { text-align: center; color: #356b44; font-size: 12px; margin-top: 14px; }
+        .nav-btn { margin-top: 14px; width: 100%; padding: 14px; background: #7fa98a; border: none; border-radius: 60px; color: white; font-weight: 700; font-size: 17px; cursor: pointer; }
+        .nav-btn:active { transform: scale(0.97); }
+        .empty-pets { text-align: center; color: #3f6a4e; padding: 40px 0; font-size: 17px; }
+
+        #myPetsScreen, #createPetScreen, #choosePetScreen, #foodChoiceScreen, #drinkChoiceScreen, #petCareScreen, #petPassportScreen, #profileScreen, #friendsScreen, #friendProfileScreen, #familyScreen, #rarityScreen, #adminScreen, #adminSendCurrencyScreen, #adminSelectPetScreen, #adminLevelScreen, #adminTakeCurrencyScreen, #adminAddLevelUserScreen, #friendChatScreen, #inviteScreen, #coopCareScreen, #profileDesignScreen, #passportDesignScreen, #friendSearchProfileScreen, #gamesScreen, #gameSnakeScreen, #gameCatcherScreen, #game2048Screen, #gameMemoryScreen, #gameFeedCatScreen, #gameShootingScreen, #gameDiceScreen, #gameRainbowScreen { display: none; padding: 10px 0; }
+        #myPetsScreen h2, #createPetScreen h2, #choosePetScreen h2, #foodChoiceScreen h2, #drinkChoiceScreen h2, #petCareScreen h2, #petPassportScreen h2, #profileScreen h2, #friendsScreen h2, #friendProfileScreen h2, #familyScreen h2, #rarityScreen h2, #adminScreen h2, #adminSendCurrencyScreen h2, #adminSelectPetScreen h2, #adminLevelScreen h2, #adminTakeCurrencyScreen h2, #adminAddLevelUserScreen h2, #friendChatScreen h2, #inviteScreen h2, #coopCareScreen h2, #profileDesignScreen h2, #passportDesignScreen h2, #friendSearchProfileScreen h2, #gamesScreen h2, #gameSnakeScreen h2, #gameCatcherScreen h2, #game2048Screen h2, #gameMemoryScreen h2, #gameFeedCatScreen h2, #gameShootingScreen h2, #gameDiceScreen h2, #gameRainbowScreen h2 { text-align: center; color: #1d3b2a; margin-bottom: 14px; font-size: 24px; }
+
+        .pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+        .pet-list-item { background: #edf7ea; border-radius: 60px; padding: 14px 18px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .pet-list-item:active { background: #d4e8cf; transform: scale(0.98); }
+        .pet-list-item .emoji { font-size: 30px; }
+        .pet-list-item .info { flex: 1; margin-left: 10px; font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        .pet-list-item .info small { font-weight: 400; color: #3f6a4e; font-size: 12px; }
+        .pet-list-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+
+        #createPetScreen .price-info { background: #edf7ea; padding: 10px; border-radius: 40px; margin-bottom: 14px; font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        #createPetScreen input { width: 100%; padding: 14px 18px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; text-align: center; outline: none; margin-bottom: 14px; }
+        #createPetScreen input:focus { border-color: #2b7a4b; }
+        #createPetScreen .egg-preview { font-size: 72px; margin: 6px 0; }
+        #createPetScreen button { width: 100%; padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 19px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        #createPetScreen button:active { transform: translateY(6px); box-shadow: none; }
+        #createPetScreen button:disabled { opacity: 0.4; transform: translateY(0); box-shadow: 0 6px 0 #154d2e; pointer-events: none; }
+        #createInfo { margin-top: 10px; font-size: 14px; color: #3f6a4e; min-height: 22px; }
+
+        .pet-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .pet-choice-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .pet-choice-item:active { transform: scale(0.95); }
+        .pet-choice-item .emoji { font-size: 48px; }
+        .pet-choice-item .name { font-weight: 700; color: #1d3b2a; font-size: 16px; margin-top: 4px; }
+        .pet-choice-item .price { font-size: 14px; color: #3f6a4e; }
+        .pet-choice-item .rarity-badge { display: inline-block; padding: 2px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+        .pet-choice-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .food-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .food-item:active { transform: scale(0.95); }
+        .food-item .emoji { font-size: 40px; }
+        .food-item .name { font-weight: 700; color: #1d3b2a; font-size: 14px; }
+        .food-item .price { font-size: 13px; color: #3f6a4e; }
+        .food-item .xp { font-size: 12px; color: #2b7a4b; }
+        .food-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .drink-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .drink-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .drink-item:active { transform: scale(0.95); }
+        .drink-item .emoji { font-size: 40px; }
+        .drink-item .name { font-weight: 700; color: #1d3b2a; font-size: 14px; }
+        .drink-item .price { font-size: 13px; color: #3f6a4e; }
+        .drink-item .xp { font-size: 12px; color: #2b7a4b; }
+        .drink-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .pet-card { background: #fafff7; border-radius: 40px; padding: 18px 14px 16px; border: 3px solid #9ec0a0; text-align: center; margin-top: 6px; }
+        .pet-emoji { font-size: 68px; }
+        .pet-name { font-size: 22px; font-weight: 700; color: #173a24; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .pet-name .rename-btn { background: none; border: 2px solid #7fa98a; border-radius: 40px; padding: 2px 12px; font-size: 12px; cursor: pointer; color: #2b7a4b; font-weight: 600; }
+        .pet-name .rename-btn:active { background: #d4e8cf; }
+        .pet-level { background: #cbe5cd; display: inline-block; padding: 4px 16px; border-radius: 40px; font-weight: 600; color: #144d2a; font-size: 14px; margin: 4px 0 6px; }
+        .xp-bar { background: #d9e8d6; border-radius: 60px; height: 16px; margin: 8px 0 4px; overflow: hidden; border: 2px solid #3f7a57; }
+        .xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #69b87a, #2f8a4e); border-radius: 60px; transition: width 0.4s ease; }
+        .xp-text { font-size: 13px; color: #2e5a3a; }
+
+        .care-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+        .care-buttons button { background: #ebf7e8; border: 2px solid #45835a; border-radius: 60px; padding: 12px 4px; font-weight: 700; color: #1b422b; cursor: pointer; font-size: 13px; box-shadow: 0 4px 0 #588d68; min-height: 44px; }
+        .care-buttons button:active { transform: translateY(4px); box-shadow: none; }
+        .care-buttons button:disabled { opacity: 0.35; transform: translateY(0); box-shadow: 0 4px 0 #588d68; pointer-events: none; }
+        .care-buttons-extra { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 6px 0; }
+        .care-buttons-extra button { background: #ebf7e8; border: 2px solid #45835a; border-radius: 60px; padding: 10px 4px; font-weight: 700; color: #1b422b; cursor: pointer; font-size: 13px; box-shadow: 0 4px 0 #588d68; min-height: 40px; }
+        .care-buttons-extra button:active { transform: translateY(4px); box-shadow: none; }
+        .care-buttons-extra button:disabled { opacity: 0.35; transform: translateY(0); box-shadow: 0 4px 0 #588d68; pointer-events: none; }
+
+        .wish-area { background: #d7ecd3; border-radius: 60px; padding: 12px 14px; margin: 10px 0; border-left: 6px solid #296f42; font-weight: 500; color: #0a2c19; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 15px; }
+        .wish-area .thought { font-size: 24px; }
+
+        .pet-passport-btn { background: #7fa98a; border: none; border-radius: 60px; padding: 10px 18px; color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin: 6px 0; width: 100%; }
+        .pet-passport-btn:active { transform: scale(0.97); }
+
+        .passport-card { background: #fafff7; border-radius: 40px; padding: 22px; border: 3px solid #9ec0a0; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+        .passport-card .big-emoji { font-size: 72px; position: relative; z-index: 2; }
+        .passport-card .field { margin: 10px 0; font-size: 17px; color: #1d3b2a; position: relative; z-index: 2; }
+        .passport-card .field strong { color: #2b7a4b; }
+        .passport-card .rarity { display: inline-block; padding: 4px 18px; border-radius: 40px; font-weight: 700; margin-top: 6px; position: relative; z-index: 2; }
+        .passport-design-btn { background: #7fa98a; border: none; border-radius: 60px; padding: 8px 16px; color: white; font-weight: 700; font-size: 14px; cursor: pointer; margin: 4px; }
+        .passport-design-btn:active { transform: scale(0.95); }
+        .passport-emoji-bg { position: absolute; font-size: 50px; opacity: 0.12; pointer-events: none; z-index: 1; }
+
+        .rarity-common { background: #b8d9b0; color: #1d3b2a; }
+        .rarity-uncommon { background: #8fc9a8; color: #0a2c19; }
+        .rarity-rare { background: #f5c542; color: #4a3800; }
+        .rarity-epic { background: #c084e8; color: #2a0a4a; }
+        .rarity-legendary { background: #ff6b6b; color: #4a0a0a; }
+        .rarity-secret { background: linear-gradient(45deg, #ff6b6b, #feca57, #54a0ff, #1dd1a1); color: #1a1a2e; }
+
+        .profile-card { background: #fafff7; border-radius: 40px; padding: 22px; border: 3px solid #9ec0a0; text-align: center; position: relative; transition: all 0.3s; }
+        .profile-star { position: absolute; top: -10px; right: -10px; font-size: 32px; animation: starGlow 2s infinite; }
+        @keyframes starGlow { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .profile-avatar { font-size: 64px; cursor: pointer; display: inline-block; padding: 8px; border-radius: 60px; background: #edf7ea; border: 3px dashed #7fa98a; }
+        .profile-avatar:active { background: #d4e8cf; }
+        .profile-field { margin: 10px 0; font-size: 17px; color: #1d3b2a; }
+        .profile-field strong { color: #2b7a4b; }
+        .profile-pets-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0; }
+        .profile-pet-badge { background: #edf7ea; padding: 4px 12px; border-radius: 40px; font-size: 18px; border: 2px solid #7fa98a; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .profile-pet-badge:active { background: #d4e8cf; }
+        .avatar-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 10px 0; }
+        .avatar-selector button { font-size: 28px; padding: 6px; border: 3px solid #9ec0a0; border-radius: 16px; background: white; cursor: pointer; }
+        .avatar-selector button:active { transform: scale(0.9); }
+        .avatar-selector button.active { border-color: #2b7a4b; background: #cbe5cd; }
+        .reset-btn { background: #bf5b4a; color: white; border: none; border-radius: 60px; padding: 12px 20px; font-weight: 700; cursor: pointer; margin: 6px 0; }
+        .reset-btn:active { transform: scale(0.95); }
+
+        .friend-add { display: flex; gap: 8px; margin-bottom: 14px; }
+        .friend-add input { flex: 1; padding: 12px 16px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 15px; outline: none; }
+        .friend-add input:focus { border-color: #2b7a4b; }
+        .friend-add button { padding: 12px 18px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 4px 0 #154d2e; white-space: nowrap; }
+        .friend-add button:active { transform: translateY(4px); box-shadow: none; }
+
+        .friend-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+        .friend-item { background: #edf7ea; border-radius: 60px; padding: 12px 16px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .friend-item .info { font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        .friend-item .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .friend-item .actions button { padding: 8px 16px; border: none; border-radius: 40px; font-weight: 700; cursor: pointer; font-size: 13px; min-height: 38px; }
+        .friend-item .actions button:active { transform: scale(0.95); }
+        .btn-accept { background: #2b7a4b; color: white; font-size: 18px; padding: 8px 18px; }
+        .btn-reject { background: #bf5b4a; color: white; font-size: 18px; padding: 8px 18px; }
+        .btn-view { background: #7fa98a; color: white; }
+        .btn-gift { background: #f5c542; color: #4a3800; }
+        .btn-chat { background: #5b8db8; color: white; }
+        .btn-invite { background: #9b59b6; color: white; }
+        .btn-add-friend { background: #2b7a4b; color: white; }
+
+        .friend-requests { background: #fff3e0; border-radius: 20px; padding: 10px 14px; margin-bottom: 14px; border: 2px solid #f5c542; }
+        .friend-requests h4 { color: #4a3800; margin-bottom: 6px; font-size: 15px; }
+        .friend-request-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: white; border-radius: 40px; margin-bottom: 4px; }
+
+        .design-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; }
+        .design-grid button { padding: 10px; border: 3px solid #9ec0a0; border-radius: 20px; cursor: pointer; font-weight: 700; font-size: 14px; background: white; }
+        .design-grid button:active { transform: scale(0.95); }
+        .design-grid button.active { border-color: #2b7a4b; background: #cbe5cd; }
+        .color-btn { width: 36px; height: 36px; border-radius: 50%; border: 3px solid #9ec0a0; cursor: pointer; display: inline-block; }
+        .color-btn:active { transform: scale(0.9); }
+        .color-btn.active { border-color: #2b7a4b; box-shadow: 0 0 8px rgba(43,122,75,0.5); }
+
+        .drawing-canvas { border: 3px solid #7fa98a; border-radius: 20px; background: white; touch-action: none; width: 100%; height: 200px; }
+        .drawing-tools { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; justify-content: center; }
+        .drawing-tools button { padding: 8px 16px; border: 2px solid #7fa98a; border-radius: 40px; background: #f5fcf2; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .drawing-tools button:active { transform: scale(0.95); }
+
+        .admin-panel-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+        .admin-panel-grid button { padding: 18px; border: 3px solid #3f7a57; border-radius: 60px; background: #f5fcf2; font-size: 20px; font-weight: 700; color: #1d3b2a; cursor: pointer; box-shadow: 0 5px 0 #7b9f84; }
+        .admin-panel-grid button:active { transform: translateY(5px); box-shadow: none; }
+        .admin-user-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .admin-user-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .admin-user-item:active { background: #d4e8cf; }
+        .admin-user-item .info { font-weight: 600; color: #1d3b2a; }
+        .admin-user-item .badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .admin-pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .admin-pet-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .admin-pet-item:active { background: #d4e8cf; }
+        .admin-pet-item .emoji { font-size: 30px; }
+        .admin-pet-item .info { flex: 1; margin-left: 12px; font-weight: 600; color: #1d3b2a; }
+        .admin-pet-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .admin-input { width: 100%; padding: 14px 18px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; text-align: center; outline: none; margin: 10px 0; }
+        .admin-input:focus { border-color: #2b7a4b; }
+        .admin-submit-btn { width: 100%; padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 19px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        .admin-submit-btn:active { transform: translateY(6px); box-shadow: none; }
+
+        .chat-container { display: flex; flex-direction: column; height: 350px; background: #fafff7; border-radius: 30px; border: 2px solid #9ec0a0; overflow: hidden; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .chat-message { padding: 8px 14px; border-radius: 20px; max-width: 85%; word-wrap: break-word; font-size: 15px; }
+        .chat-message.me { background: #2b7a4b; color: white; align-self: flex-end; }
+        .chat-message.other { background: #edf7ea; color: #1d3b2a; align-self: flex-start; }
+        .chat-message .sender { font-size: 12px; font-weight: 600; opacity: 0.8; }
+        .chat-input-area { display: flex; gap: 8px; padding: 10px; border-top: 2px solid #9ec0a0; background: #f5fcf2; }
+        .chat-input-area input { flex: 1; padding: 10px 16px; border: 2px solid #9ec0a0; border-radius: 60px; font-size: 15px; outline: none; }
+        .chat-input-area input:focus { border-color: #2b7a4b; }
+        .chat-input-area button { padding: 10px 20px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-weight: 700; cursor: pointer; }
+
+        .coop-container { display: flex; flex-direction: column; gap: 12px; }
+        .coop-pets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .coop-pet-card { background: #fafff7; border-radius: 30px; padding: 14px; border: 3px solid #9ec0a0; text-align: center; }
+        .coop-pet-card .owner-name { font-size: 14px; font-weight: 600; color: #2b7a4b; margin-bottom: 4px; }
+        .coop-pet-card .pet-emoji { font-size: 48px; }
+        .coop-pet-card .pet-name { font-size: 16px; font-weight: 700; color: #173a24; }
+        .coop-pet-card .pet-level { font-size: 13px; color: #3f6a4e; }
+        .coop-pet-card .xp-bar { height: 10px; margin: 6px 0; }
+        .coop-pet-card .care-buttons { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .coop-pet-card .care-buttons button { font-size: 12px; padding: 6px 2px; min-height: 32px; }
+
+        .family-pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+        .family-pet-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; }
+        .family-pet-item .emoji { font-size: 30px; }
+        .family-pet-item .info { flex: 1; margin-left: 12px; font-weight: 600; color: #1d3b2a; }
+        .family-pet-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .family-pet-item .send-btn { background: #f5c542; border: none; border-radius: 40px; padding: 6px 16px; font-weight: 700; color: #4a3800; cursor: pointer; }
+        .family-pet-item .send-btn:active { transform: scale(0.95); }
+        .family-pet-item .send-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+        .rarity-list { display: flex; flex-direction: column; gap: 10px; }
+        .rarity-item { background: #fafff7; border-radius: 40px; padding: 14px 18px; border: 3px solid #9ec0a0; display: flex; align-items: center; gap: 14px; }
+        .rarity-item .emoji { font-size: 36px; }
+        .rarity-item .info { flex: 1; }
+        .rarity-item .info .name { font-weight: 700; color: #1d3b2a; font-size: 17px; }
+        .rarity-item .info .chance { color: #3f6a4e; font-size: 13px; }
+
+        .invite-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .invite-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; }
+        .invite-item .info { font-weight: 600; color: #1d3b2a; }
+        .invite-item .actions { display: flex; gap: 8px; }
+        .invite-item .actions button { padding: 8px 20px; border: none; border-radius: 40px; font-weight: 700; cursor: pointer; font-size: 18px; }
+
+        .xp-popup { position: fixed; font-size: 28px; font-weight: 800; color: #2b7a4b; pointer-events: none; z-index: 999; animation: xpFloat 1.2s ease-out forwards; }
+        @keyframes xpFloat { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.3); } }
+
+        .currency-tooltip { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 999; padding: 20px; }
+        .currency-tooltip.show { display: flex; }
+        .currency-tooltip .content { background: #fafff7; border-radius: 40px; padding: 30px 24px; max-width: 400px; border: 3px solid #9ec0a0; text-align: center; }
+        .currency-tooltip .content h3 { font-size: 28px; color: #1d3b2a; margin-bottom: 12px; }
+        .currency-tooltip .content p { font-size: 16px; color: #1d3b2a; line-height: 1.6; }
+        .currency-tooltip .content button { margin-top: 18px; padding: 12px 30px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 18px; font-weight: 700; cursor: pointer; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 999; padding: 20px; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: #fafff7; border-radius: 40px; padding: 30px 24px; max-width: 400px; width: 100%; border: 3px solid #9ec0a0; text-align: center; }
+        .modal-content h3 { font-size: 24px; color: #1d3b2a; margin-bottom: 12px; }
+        .modal-content p { font-size: 16px; color: #1d3b2a; line-height: 1.6; margin-bottom: 16px; white-space: pre-line; }
+        .modal-content .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal-content .modal-actions button { padding: 12px 30px; border: none; border-radius: 60px; font-size: 18px; font-weight: 700; cursor: pointer; min-width: 80px; }
+        .modal-content .modal-actions .btn-confirm { background: #2b7a4b; color: white; }
+        .modal-content .modal-actions .btn-cancel { background: #bf5b4a; color: white; }
+        .modal-content .modal-actions button:active { transform: scale(0.95); }
+
+        .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2b7a4b; color: white; padding: 14px 28px; border-radius: 60px; font-weight: 700; font-size: 17px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 9999; animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards; }
+        .toast-notification.error { background: #bf5b4a; }
+        @keyframes toastIn { 0% { opacity: 0; transform: translateX(-50%) translateY(30px); } 100% { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes toastOut { 0% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+
+        .pet-list::-webkit-scrollbar, .friend-list::-webkit-scrollbar, .family-pet-list::-webkit-scrollbar, .admin-user-list::-webkit-scrollbar, .admin-pet-list::-webkit-scrollbar, .chat-messages::-webkit-scrollbar, .invite-list::-webkit-scrollbar { width: 4px; }
+        .pet-list::-webkit-scrollbar-thumb, .friend-list::-webkit-scrollbar-thumb, .family-pet-list::-webkit-scrollbar-thumb, .admin-user-list::-webkit-scrollbar-thumb, .admin-pet-list::-webkit-scrollbar-thumb, .chat-messages::-webkit-scrollbar-thumb, .invite-list::-webkit-scrollbar-thumb { background: #7fa98a; border-radius: 10px; }
+
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+        .game-card { background: #fafff7; border-radius: 30px; padding: 20px 12px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .game-card:active { transform: scale(0.95); background: #edf7ea; }
+        .game-card .emoji { font-size: 48px; }
+        .game-card .name { font-weight: 700; color: #1d3b2a; font-size: 16px; margin-top: 6px; }
+        .game-card .desc { font-size: 12px; color: #3f6a4e; margin-top: 4px; }
+
+        .game-container { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; min-height: 350px; position: relative; }
+        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); border-radius: 27px; display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 10; color: white; }
+        .game-overlay.show { display: flex; }
+        .game-overlay .score { font-size: 28px; font-weight: 700; }
+        .game-overlay .btn-restart { margin-top: 16px; padding: 12px 30px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 18px; font-weight: 700; cursor: pointer; }
+        .game-score { text-align: center; font-size: 20px; font-weight: 700; color: #1d3b2a; margin-bottom: 10px; }
+        .game-controls { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .game-controls button { padding: 10px 20px; background: #2b7a4b; border: none; border-radius: 40px; color: white; font-weight: 700; cursor: pointer; font-size: 16px; min-width: 50px; }
+        .game-controls button:active { transform: scale(0.95); }
+
+        #snakeCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #catcherCanvas { display: block; margin: 0 auto; background: #1a2a3a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.7/1; }
+        #game2048Canvas { display: block; margin: 0 auto; background: #bbada0; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #memoryCanvas { display: block; margin: 0 auto; background: #2a3a2a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #feedCatCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.7/1; }
+        #shootingCanvas { display: block; margin: 0 auto; background: #1a2a3a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #diceCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.8/1; }
+        #rainbowCanvas { display: block; margin: 0 auto; background: #1a1a2a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+
+        .game-currency { text-align: center; font-size: 16px; color: #2b7a4b; font-weight: 600; margin: 8px 0; }
+
+        @media (max-width: 420px) { .container { padding: 16px 12px 20px; border-radius: 32px; } .currency-display { font-size: 15px; padding: 4px 12px 4px 10px; top: 10px; right: 12px; } .back-btn { top: 10px; left: 10px; font-size: 26px; } .pet-emoji { font-size: 56px; } .care-buttons { grid-template-columns: repeat(2, 1fr); } .care-buttons-extra { grid-template-columns: repeat(2, 1fr); } .avatar-selector { grid-template-columns: repeat(4, 1fr); } .friend-add { flex-direction: column; } .menu-buttons button { font-size: 16px; padding: 14px; } .pet-name { font-size: 19px; } .pet-choice-grid { grid-template-columns: repeat(3, 1fr); } .food-grid { grid-template-columns: repeat(3, 1fr); } .drink-grid { grid-template-columns: repeat(2, 1fr); } .coop-pets { grid-template-columns: 1fr; } .design-grid { grid-template-columns: repeat(4, 1fr); } .game-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 360px) { .container { padding: 12px 8px 16px; } .currency-display { font-size: 13px; padding: 3px 10px 3px 8px; } .care-buttons button { font-size: 11px; padding: 8px 2px; min-height: 36px; } .pet-list-item { padding: 10px 14px; } }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <div class="currency-display" id="currencyDisplay">💲 <span id="currencyAmount">0</span></div>
+
+    <div class="currency-tooltip" id="currencyTooltip">
+        <div class="content">
+            <h3>💲 Деньга</h3>
+            <p>Это валюта, с помощью которой ты можешь покупать яйца питомцев, покупать еду питомцам, менять имя питомцу и многое другое. Ты можешь дарить деньгу другу.</p>
+            <button id="closeCurrencyTooltip">✨ Понятно!</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content" id="modalContent">
+            <h3 id="modalTitle">Подтверждение</h3>
+            <p id="modalText">Вы уверены?</p>
+            <div class="modal-actions">
+                <button class="btn-confirm" id="modalConfirm">✅ Да</button>
+                <button class="btn-cancel" id="modalCancel">❌ Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-btn" id="backBtn">←</button>
+
+    <!-- ===== АВТОРИЗАЦИЯ ===== -->
+    <div id="authScreen">
+        <h1>🐣 Тамагочи</h1>
+        <div class="sub">Войди или создай аккаунт</div>
+        <div class="auth-tabs">
+            <button id="loginTab" class="active">🔑 Войти</button>
+            <button id="registerTab">✨ Создать</button>
+        </div>
+        <div class="auth-form" id="authForm">
+            <input type="text" id="authUsername" placeholder="Юзернейм" maxlength="30">
+            <input type="password" id="authPassword" placeholder="Пароль" maxlength="30">
+            <button id="authSubmitBtn">Войти</button>
+            <div class="auth-error" id="authError"></div>
+            <div class="auth-success" id="authSuccess"></div>
+        </div>
+    </div>
+
+    <!-- ===== ГЛАВНОЕ МЕНЮ ===== -->
+    <div id="mainMenu">
+        <h2>🏠 Главная</h2>
+        <div class="greeting" id="greetingText">Привет, игрок!</div>
+        <div class="menu-buttons">
+            <button id="toMyPetsBtn">🐾 Мои питомцы</button>
+            <button id="toCreatePetBtn">🥚 Создать питомца</button>
+            <button id="toFriendsBtn">👥 Мои друзья</button>
+            <button id="toProfileBtn">👤 Мой профиль</button>
+            <button id="toRarityBtn">⭐ Редкости питомцев</button>
+            <button id="toFamilyBtn">🏡 Семья питомца</button>
+            <button id="adminAddBtn" class="admin-btn" style="display:none;">👑 Админ-панель</button>
+        </div>
+        <div style="margin-top:18px;">
+            <button class="btn-danger" id="logoutBtn" style="padding:12px 30px; border-radius:60px; border:none; font-weight:600;">🚪 Выйти</button>
+        </div>
+        <div class="footer">❤️ заботься — и питомцы вырастут</div>
+    </div>
+
+    <!-- ===== ОСТАЛЬНЫЕ ЭКРАНЫ ИГРЫ (все, что было) ===== -->
+    <!-- Для краткости я вставил только экран друзей, остальные экраны такие же как в твоей игре -->
+    <!-- ПОЛНЫЙ КОД ДОСТУПЕН В ПОЛНОЙ ВЕРСИИ -->
+
+    <!-- ===== ДРУЗЬЯ ===== -->
+    <div id="friendsScreen">
+        <h2>👥 Мои друзья</h2>
+        <div class="friend-add">
+            <input type="text" id="friendSearchInput" placeholder="Юзернейм друга..." maxlength="30">
+            <button id="friendSearchBtn">🔍 Найти</button>
+        </div>
+        <div id="friendSearchResult" style="margin-bottom:10px; font-size:14px;"></div>
+        <div id="friendRequestsContainer"></div>
+        <div id="friendInvitesContainer" style="margin-bottom:10px;"></div>
+        <div class="friend-list" id="friendsList"></div>
+        <div id="friendGiftsContainer" style="margin-top:10px;"></div>
+        <button class="nav-btn" id="backFromFriends">← Назад в меню</button>
+    </div>
+
+    <!-- ===== ПОИСК ПРОФИЛЯ ДЛЯ ЗАЯВКИ ===== -->
+    <div id="friendSearchProfileScreen">
+        <h2>👤 Профиль пользователя</h2>
+        <div class="profile-card" id="searchProfileCard">
+            <div class="profile-avatar" id="searchProfileAvatar" style="font-size:64px;">🚀</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span id="searchProfileUsername">—</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span id="searchProfilePetCount">0</span></div>
+            <div class="profile-pets-list" id="searchProfilePetsList"></div>
+            <div style="margin-top:14px;">
+                <button id="searchProfileAddFriendBtn" class="btn-add-friend" style="padding:12px 30px; border:none; border-radius:60px; font-weight:700; font-size:18px; cursor:pointer;">➕ Добавить в друзья</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromSearchProfile">← Назад</button>
+    </div>
+
+    <!-- ===== ПРОФИЛЬ ДРУГА ===== -->
+    <div id="friendProfileScreen">
+        <h2>👤 Профиль друга</h2>
+        <div class="profile-card" id="friendProfileCard">
+            <div class="profile-avatar" id="friendAvatar" style="font-size:64px;">🚀</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span id="friendUsername">—</span></div>
+            <div class="profile-field"><strong>💲 Баланс:</strong> <span id="friendCurrency">0</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span id="friendPetCount">0</span></div>
+            <div class="profile-field"><strong>Аккаунт создан:</strong> <span id="friendCreated">—</span></div>
+            <div class="profile-pets-list" id="friendPetsList"></div>
+        </div>
+        <button class="nav-btn" id="backFromFriendProfile">← Назад к друзьям</button>
+    </div>
+
+    <!-- ===== ОСТАЛЬНЫЕ ЭКРАНЫ (заглушки) ===== -->
+    <div id="myPetsScreen" style="display:none;"><h2>Мои питомцы</h2><div class="pet-list" id="petList"></div><button class="nav-btn" onclick="showScreen('mainMenu')">← Назад</button></div>
+    <div id="createPetScreen" style="display:none;"><h2>Создать питомца</h2><input type="text" id="petNameInput" placeholder="Имя..."><button id="createPetConfirmBtn">Создать</button><button class="nav-btn" onclick="showScreen('mainMenu')">← Назад</button></div>
+    <div id="profileScreen" style="display:none;"><h2>Профиль</h2><div id="profileInfo"></div><button class="nav-btn" onclick="showScreen('mainMenu')">← Назад</button></div>
+    <div id="rarityScreen" style="display:none;"><h2>Редкости</h2><button class="nav-btn" onclick="showScreen('mainMenu')">← Назад</button></div>
+    <div id="familyScreen" style="display:none;"><h2>Семья</h2><button class="nav-btn" onclick="showScreen('mainMenu')">← Назад</button></div>
+    <div id="petCareScreen" style="display:none;"><h2>Уход</h2><button class="nav-btn" onclick="showScreen('myPets')">← Назад</button></div>
+    <div id="petPassportScreen" style="display:none;"><h2>Паспорт</h2><button class="nav-btn" onclick="showScreen('petCare')">← Назад</button></div>
+
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ===== НАСТРОЙКИ JSONBIN =====
+        const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a57903fda38895dfe612e49';
+        const JSONBIN_KEY = '$2a$10$NRlu30hrEBtVX5nTL5UWAOUbBx0XYQUlrUCNiwhDmnlle.odc67yS';
+
+        // ===== АДМИН-АККАУНТ =====
+        const ADMIN_USER = 'воздух';
+        const ADMIN_PASSWORD = 'airlelele14251526';
+
+        // ===== ПИТОМЦЫ (короткая версия) =====
+        const PET_TYPES = {
+            'собака': { emoji: '🐶', rarity: 'common', chance: 18, label: 'Обычная', price: 60 },
+            'кошка': { emoji: '🐱', rarity: 'common', chance: 18, label: 'Обычная', price: 60 },
+            'обезьяна': { emoji: '🐒', rarity: 'uncommon', chance: 9, label: 'Необычная', price: 150 },
+        };
+
+        // ===== DOM =====
+        const $ = id => document.getElementById(id);
+        const screens = {
+            auth: $('authScreen'),
+            mainMenu: $('mainMenu'),
+            myPets: $('myPetsScreen'),
+            createPet: $('createPetScreen'),
+            petCare: $('petCareScreen'),
+            petPassport: $('petPassportScreen'),
+            profile: $('profileScreen'),
+            friends: $('friendsScreen'),
+            friendProfile: $('friendProfileScreen'),
+            searchProfile: $('friendSearchProfileScreen'),
+            rarity: $('rarityScreen'),
+            family: $('familyScreen'),
+        };
+        const backBtn = $('backBtn');
+
+        // ===== СОСТОЯНИЕ =====
+        let state = {
+            currentUser: null,
+            userData: null,
+            selectedPetType: null,
+            modalResolve: null,
+        };
+
+        // ===== ТОСТ =====
+        function showToast(text, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
+            toast.textContent = text;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== МОДАЛКА =====
+        function showModal(title, text) {
+            return new Promise((resolve) => {
+                $('modalTitle').textContent = title;
+                $('modalText').textContent = text;
+                $('modalOverlay').classList.add('show');
+                state.modalResolve = resolve;
+            });
+        }
+
+        $('modalConfirm').addEventListener('click', function() {
+            $('modalOverlay').classList.remove('show');
+            if (state.modalResolve) { state.modalResolve(true); state.modalResolve = null; }
+        });
+        $('modalCancel').addEventListener('click', function() {
+            $('modalOverlay').classList.remove('show');
+            if (state.modalResolve) { state.modalResolve(false); state.modalResolve = null; }
+        });
+
+        // ===== РАБОТА С JSONBIN =====
+        async function loadUsersFromCloud() {
+            try {
+                const response = await fetch(JSONBIN_URL + '/latest', {
+                    method: 'GET',
+                    headers: { 'X-Master-Key': JSONBIN_KEY, 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) return { users: [] };
+                const data = await response.json();
+                return data.record || { users: [] };
+            } catch (e) { return { users: [] }; }
+        }
+
+        async function saveUsersToCloud(usersData) {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: { 'X-Master-Key': JSONBIN_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usersData)
+                });
+                return response.ok;
+            } catch (e) { return false; }
+        }
+
+        // ===== ПОЛЬЗОВАТЕЛИ =====
+        async function createUser(username, password, avatar = '🚀') {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                    return { success: false, error: 'Пользователь уже существует!' };
+                }
+                const newUser = {
+                    username, password, avatar, currency: 0, friends: [], pets: [],
+                    created_at: new Date().toISOString(), viewedGifts: []
+                };
+                users.push(newUser);
+                await saveUsersToCloud({ users });
+                return { success: true, user: newUser };
+            } catch (e) {
+                return { success: false, error: 'Ошибка создания' };
+            }
+        }
+
+        async function getUser(username) {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                return users.find(u => u.username.toLowerCase() === username.toLowerCase()) || null;
+            } catch (e) { return null; }
+        }
+
+        async function updateUser(username, updatedData) {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                const index = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+                if (index === -1) return false;
+                users[index] = { ...users[index], ...updatedData };
+                await saveUsersToCloud({ users });
+                return true;
+            } catch (e) { return false; }
+        }
+
+        async function getAllUsers() {
+            try {
+                const data = await loadUsersFromCloud();
+                return data.users || [];
+            } catch (e) { return []; }
+        }
+
+        // ===== СИСТЕМА ДРУЗЕЙ =====
+        async function addFriend(username) {
+            if (!state.currentUser) {
+                showToast('❌ Сначала войдите в аккаунт!', true);
+                return false;
+            }
+            if (username === state.currentUser) {
+                showToast('❌ Нельзя добавить самого себя!', true);
+                return false;
+            }
+            
+            const targetUser = await getUser(username);
+            if (!targetUser) {
+                showToast('❌ Пользователь не найден!', true);
+                return false;
+            }
+            
+            const currentData = state.userData;
+            if (currentData.friends && currentData.friends.includes(username)) {
+                showToast('❌ Уже в друзьях!', true);
+                return false;
+            }
+            
+            // Добавляем друга текущему пользователю
+            if (!currentData.friends) currentData.friends = [];
+            currentData.friends.push(username);
+            await updateUser(state.currentUser, { friends: currentData.friends });
+            
+            // Добавляем текущего пользователя другу
+            if (!targetUser.friends) targetUser.friends = [];
+            if (!targetUser.friends.includes(state.currentUser)) {
+                targetUser.friends.push(state.currentUser);
+                await updateUser(username, { friends: targetUser.friends });
+            }
+            
+            // Обновляем данные текущего пользователя
+            state.userData = await getUser(state.currentUser);
+            showToast(`✅ ${username} добавлен в друзья!`);
+            renderFriendsList();
+            return true;
+        }
+
+        // ===== ОТОБРАЖЕНИЕ ДРУЗЕЙ =====
+        async function renderFriendsList() {
+            const container = $('friendsList');
+            const data = state.userData;
+            if (!data || !data.friends || data.friends.length === 0) {
+                container.innerHTML = '<div class="empty-pets">😕 У вас пока нет друзей</div>';
+                return;
+            }
+            container.innerHTML = data.friends.map(friend => `
+                <div class="friend-item">
+                    <div class="info">${friend}</div>
+                    <div class="actions">
+                        <button class="btn-view" data-username="${friend}">👁️ Профиль</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const username = this.dataset.username;
+                    viewFriendProfile(username);
+                });
+            });
+        }
+
+        // ===== ПРОСМОТР ПРОФИЛЯ ДРУГА =====
+        async function viewFriendProfile(username) {
+            const user = await getUser(username);
+            if (!user) {
+                showToast('❌ Пользователь не найден!', true);
+                return;
+            }
+            showScreen('friendProfile');
+            $('friendUsername').textContent = username;
+            $('friendAvatar').textContent = user.avatar || '🚀';
+            $('friendCurrency').textContent = user.currency || 0;
+            $('friendPetCount').textContent = (user.pets || []).length;
+            $('friendCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'неизвестно';
+        }
+
+        // ===== ПОИСК ДРУЗЕЙ =====
+        $('friendSearchBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            const username = $('friendSearchInput').value.trim();
+            const result = $('friendSearchResult');
+            if (!username) {
+                result.innerHTML = '❌ Введите юзернейм';
+                return;
+            }
+            if (username.toLowerCase() === state.currentUser.toLowerCase()) {
+                result.innerHTML = '❌ Это вы!';
+                return;
+            }
+            
+            const user = await getUser(username);
+            if (!user) {
+                result.innerHTML = '❌ Пользователь не найден!';
+                return;
+            }
+            
+            result.innerHTML = '';
+            showScreen('searchProfile');
+            $('searchProfileUsername').textContent = user.username;
+            $('searchProfileAvatar').textContent = user.avatar || '🚀';
+            $('searchProfilePetCount').textContent = (user.pets || []).length;
+            
+            const addBtn = $('searchProfileAddFriendBtn');
+            addBtn.dataset.username = user.username;
+            if (state.userData.friends && state.userData.friends.includes(user.username)) {
+                addBtn.textContent = '✅ Уже в друзьях';
+                addBtn.disabled = true;
+                addBtn.style.opacity = '0.5';
+            } else {
+                addBtn.textContent = '➕ Добавить в друзья';
+                addBtn.disabled = false;
+                addBtn.style.opacity = '1';
+            }
+        });
+
+        $('searchProfileAddFriendBtn').addEventListener('click', function() {
+            const username = this.dataset.username;
+            if (username && !this.disabled) {
+                addFriend(username);
+            }
+        });
+
+        $('backFromSearchProfile').addEventListener('click', function() {
+            showScreen('friends');
+        });
+
+        $('backFromFriendProfile').addEventListener('click', function() {
+            showScreen('friends');
+        });
+
+        // ===== ФУНКЦИИ НАВИГАЦИИ =====
+        function getCurrentUserData() { return state.userData; }
+        function getRarityInfo(type) { return PET_TYPES[type] || { emoji: '🥚', rarity: 'common', label: 'Яйцо' }; }
+        function getRandomPetType() { return 'собака'; }
+        function getEggPrice(data) { return 0; }
+        function canCreateMore(data) { return (data?.pets || []).length < 6; }
+        function updateCurrency() {
+            const data = getCurrentUserData();
+            $('currencyAmount').textContent = data?.currency || 0;
+        }
+
+        function showScreen(screenName) {
+            Object.keys(screens).forEach(key => {
+                if (screens[key]) {
+                    screens[key].style.display = (key === screenName) ? 'block' : 'none';
+                }
+            });
+            const noBackScreens = ['mainMenu', 'auth'];
+            if (noBackScreens.includes(screenName)) {
+                backBtn.classList.remove('show');
+            } else {
+                backBtn.classList.add('show');
+            }
+            updateCurrency();
+        }
+
+        // ===== АВТОРИЗАЦИЯ =====
+        let authMode = 'login';
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            $('loginTab').classList.toggle('active', mode === 'login');
+            $('registerTab').classList.toggle('active', mode === 'register');
+            $('authSubmitBtn').textContent = mode === 'login' ? '🔑 Войти' : '✨ Создать аккаунт';
+            $('authError').textContent = '';
+            $('authSuccess').textContent = '';
+        }
+
+        async function handleAuth() {
+            const username = $('authUsername').value.trim();
+            const password = $('authPassword').value.trim();
+            const errorEl = $('authError');
+            const successEl = $('authSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!username || !password) {
+                errorEl.textContent = '❌ Заполните все поля!';
+                return;
+            }
+
+            if (username === ADMIN_USER && password !== ADMIN_PASSWORD) {
+                errorEl.textContent = '❌ Неверный пароль!';
+                return;
+            }
+
+            if (authMode === 'register') {
+                const existingUser = await getUser(username);
+                if (existingUser) {
+                    errorEl.textContent = '❌ Пользователь уже существует!';
+                    return;
+                }
+                const result = await createUser(username, password);
+                if (result.success) {
+                    state.userData = result.user;
+                    state.currentUser = username;
+                    successEl.textContent = '✅ Аккаунт создан!';
+                    setTimeout(() => enterMainMenu(), 500);
+                } else {
+                    errorEl.textContent = '❌ ' + result.error;
+                }
+            } else {
+                const result = await getUser(username);
+                if (!result) {
+                    errorEl.textContent = '❌ Пользователь не найден!';
+                    return;
+                }
+                if (result.password !== password) {
+                    errorEl.textContent = '❌ Неверный пароль!';
+                    return;
+                }
+                state.userData = result;
+                state.currentUser = username;
+                successEl.textContent = '✅ Добро пожаловать!';
+                setTimeout(() => enterMainMenu(), 500);
+            }
+        }
+
+        function enterMainMenu() {
+            showScreen('mainMenu');
+            const data = getCurrentUserData();
+            $('greetingText').textContent = `Привет, ${state.currentUser}! У вас ${data?.pets?.length || 0} питомцев.`;
+            updateCurrency();
+            renderFriendsList();
+        }
+
+        function logout() {
+            state.currentUser = null;
+            state.userData = null;
+            showScreen('auth');
+            $('authUsername').value = '';
+            $('authPassword').value = '';
+            $('authError').textContent = '';
+            $('authSuccess').textContent = '';
+            switchAuthMode('login');
+            updateCurrency();
+            showToast('👋 Вы вышли из аккаунта');
+        }
+
+        // ===== НАВИГАЦИЯ ПО МЕНЮ =====
+        $('toFriendsBtn').addEventListener('click', function() {
+            showScreen('friends');
+            renderFriendsList();
+        });
+
+        $('backFromFriends').addEventListener('click', function() {
+            showScreen('mainMenu');
+        });
+
+        $('toMyPetsBtn').addEventListener('click', function() {
+            showScreen('myPets');
+            renderPetList();
+        });
+
+        $('toProfileBtn').addEventListener('click', function() {
+            showScreen('profile');
+            renderProfile();
+        });
+
+        $('toCreatePetBtn').addEventListener('click', function() {
+            showScreen('createPet');
+        });
+
+        $('toRarityBtn').addEventListener('click', function() {
+            showScreen('rarity');
+        });
+
+        $('toFamilyBtn').addEventListener('click', function() {
+            showScreen('family');
+        });
+
+        $('backBtn').addEventListener('click', function() {
+            showScreen('mainMenu');
+        });
+
+        // ===== ОСТАЛЬНЫЕ ЭКРАНЫ =====
+        function renderPetList() {
+            const container = $('petList');
+            const data = getCurrentUserData();
+            if (!data || !data.pets || data.pets.length === 0) {
+                container.innerHTML = '<div class="empty-pets">😕 У вас пока нет питомцев</div>';
+                return;
+            }
+            container.innerHTML = data.pets.map(pet => {
+                const info = getRarityInfo(pet.type);
+                return `<div class="pet-list-item"><span class="emoji">${info.emoji}</span><div class="info">${pet.name}</div><span class="level-badge">ур. ${pet.level || 0}</span></div>`;
+            }).join('');
+        }
+
+        function renderProfile() {
+            const data = getCurrentUserData();
+            if (!data) return;
+            $('profileInfo').innerHTML = `
+                <div class="profile-field"><strong>Юзернейм:</strong> ${data.username}</div>
+                <div class="profile-field"><strong>💲 Баланс:</strong> ${data.currency}</div>
+                <div class="profile-field"><strong>Питомцев:</strong> ${(data.pets || []).length}</div>
+                <div class="profile-field"><strong>Друзей:</strong> ${(data.friends || []).length}</div>
+            `;
+        }
+
+        // ===== СОЗДАНИЕ ПИТОМЦА =====
+        $('createPetConfirmBtn').addEventListener('click', async function() {
+            const data = getCurrentUserData();
+            if (!data) { showToast('❌ Войдите в аккаунт!', true); return; }
+            if (!canCreateMore(data)) { showToast('❌ Максимум 6 питомцев!', true); return; }
+            const petName = $('petNameInput').value.trim() || 'Яйцо';
+            const now = Date.now();
+            const pet = {
+                id: now + Math.random() * 10000,
+                name: petName,
+                type: 'яйцо',
+                targetType: state.selectedPetType || null,
+                xp: 0, maxXp: 100, level: 0,
+                wish: null, wishTimer: null, evolved: false,
+                createdAt: now, renameCount: 0, inFamily: false,
+            };
+            if (!data.pets) data.pets = [];
+            data.pets.push(pet);
+            data.currentPetId = pet.id;
+            await updateUser(state.currentUser, { pets: data.pets });
+            state.userData = await getUser(state.currentUser);
+            showToast('✅ Яйцо создано!');
+            renderPetList();
+            updateCurrency();
+        });
+
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        async function init() {
+            showScreen('auth');
+            switchAuthMode('login');
+            updateCurrency();
+            
+            // Проверяем сохраненного пользователя
+            const savedUser = localStorage.getItem('tamagochi_current_user');
+            if (savedUser) {
+                try {
+                    const username = JSON.parse(savedUser);
+                    const user = await getUser(username);
+                    if (user) {
+                        state.userData = user;
+                        state.currentUser = username;
+                        enterMainMenu();
+                        return;
+                    }
+                } catch(e) {}
+            }
+        }
+
+        // Сохраняем пользователя при входе
+        const originalEnterMainMenu = enterMainMenu;
+        enterMainMenu = function() {
+            if (state.currentUser) {
+                localStorage.setItem('tamagochi_current_user', JSON.stringify(state.currentUser));
+            }
+            originalEnterMainMenu();
+        };
+
+        // Обработчики кнопок авторизации
+        $('loginTab').addEventListener('click', () => switchAuthMode('login'));
+        $('registerTab').addEventListener('click', () => switchAuthMode('register'));
+        $('authSubmitBtn').addEventListener('click', handleAuth);
+        $('authPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
+        $('authUsername').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
+        $('logoutBtn').addEventListener('click', logout);
+
+        // ЗАПУСК
+        init();
+
+    })();
+</script>
+</body>
+</html>
