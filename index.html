@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Тамагочи — Социальная игра</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { min-height: 100vh; background: linear-gradient(145deg, #0b2e1f 0%, #1a4f33 100%); display: flex; justify-content: center; align-items: center; padding: 12px; }
+        .container { max-width: 440px; width: 100%; background: rgba(255,248,235,0.95); backdrop-filter: blur(8px); border-radius: 48px 48px 32px 32px; padding: 24px 16px 26px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 2px solid #b8d9b0; min-height: 480px; position: relative; }
+        .currency-display { position: absolute; top: 14px; right: 18px; background: rgba(43,122,75,0.15); padding: 6px 16px 6px 12px; border-radius: 60px; font-size: 18px; font-weight: 700; color: #1d3b2a; border: 2px solid #7fa98a; display: flex; align-items: center; gap: 4px; z-index: 20; cursor: pointer; }
+        .currency-display:active { background: rgba(43,122,75,0.3); }
+        .back-btn { position: absolute; top: 14px; left: 14px; background: none; border: none; font-size: 30px; cursor: pointer; color: #1d3b2a; z-index: 10; padding: 4px 8px; border-radius: 40px; display: none; }
+        .back-btn:active { background: rgba(0,0,0,0.1); }
+        .back-btn.show { display: block; }
+        .notification-dot { display: inline-block; width: 12px; height: 12px; background: #ff4444; border-radius: 50%; margin-left: 8px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } }
+
+        #authScreen { text-align: center; padding: 20px 10px; display: block; }
+        #authScreen h1 { font-size: 34px; color: #1d3b2a; margin-bottom: 4px; }
+        #authScreen .sub { color: #3a5e47; font-size: 14px; margin-bottom: 20px; }
+        .auth-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+        .auth-tabs button { flex: 1; padding: 12px; border: 3px solid #9ec0a0; border-radius: 60px; background: #f5fcf2; font-weight: 700; font-size: 15px; color: #1d3b2a; cursor: pointer; }
+        .auth-tabs button:active { transform: scale(0.96); }
+        .auth-tabs button.active { background: #2b7a4b; color: white; border-color: #2b7a4b; }
+        .auth-form { display: flex; flex-direction: column; gap: 12px; }
+        .auth-form input { padding: 16px 20px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; background: white; outline: none; text-align: center; }
+        .auth-form input:focus { border-color: #2b7a4b; }
+        .auth-form button { padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 20px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        .auth-form button:active { transform: translateY(6px); box-shadow: none; }
+        .auth-error { color: #b33; font-size: 14px; min-height: 22px; margin-top: 6px; }
+        .auth-success { color: #2b7a4b; font-size: 14px; min-height: 22px; margin-top: 6px; }
+
+        #mainMenu { display: none; text-align: center; padding: 10px 0; }
+        #mainMenu h2 { color: #1d3b2a; font-size: 26px; }
+        #mainMenu .greeting { color: #2f5f40; margin-bottom: 18px; font-size: 15px; }
+        .menu-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+        .menu-buttons button { padding: 16px; border: 3px solid #3f7a57; border-radius: 60px; background: #f5fcf2; font-size: 18px; font-weight: 700; color: #1d3b2a; cursor: pointer; box-shadow: 0 5px 0 #7b9f84; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .menu-buttons button:active { transform: translateY(5px); box-shadow: none; }
+        .btn-danger { background: #bf5b4a !important; border-color: #823b2f !important; color: white !important; box-shadow: 0 5px 0 #632f26 !important; }
+        .admin-btn { background: #f5c542 !important; border-color: #c99a2a !important; color: #4a3800 !important; box-shadow: 0 5px 0 #c99a2a !important; }
+        .footer { text-align: center; color: #356b44; font-size: 12px; margin-top: 14px; }
+        .nav-btn { margin-top: 14px; width: 100%; padding: 14px; background: #7fa98a; border: none; border-radius: 60px; color: white; font-weight: 700; font-size: 17px; cursor: pointer; }
+        .nav-btn:active { transform: scale(0.97); }
+        .empty-pets { text-align: center; color: #3f6a4e; padding: 40px 0; font-size: 17px; }
+
+        #myPetsScreen, #createPetScreen, #choosePetScreen, #foodChoiceScreen, #drinkChoiceScreen, #petCareScreen, #petPassportScreen, #profileScreen, #friendsScreen, #friendProfileScreen, #familyScreen, #rarityScreen, #adminScreen, #adminSendCurrencyScreen, #adminSelectPetScreen, #adminLevelScreen, #adminTakeCurrencyScreen, #adminAddLevelUserScreen, #friendChatScreen, #inviteScreen, #coopCareScreen, #profileDesignScreen, #passportDesignScreen, #friendSearchProfileScreen, #gamesScreen, #gameSnakeScreen, #gameCatcherScreen, #game2048Screen, #gameMemoryScreen, #gameFeedCatScreen, #gameShootingScreen, #gameDiceScreen, #gameRainbowScreen { display: none; padding: 10px 0; }
+        #myPetsScreen h2, #createPetScreen h2, #choosePetScreen h2, #foodChoiceScreen h2, #drinkChoiceScreen h2, #petCareScreen h2, #petPassportScreen h2, #profileScreen h2, #friendsScreen h2, #friendProfileScreen h2, #familyScreen h2, #rarityScreen h2, #adminScreen h2, #adminSendCurrencyScreen h2, #adminSelectPetScreen h2, #adminLevelScreen h2, #adminTakeCurrencyScreen h2, #adminAddLevelUserScreen h2, #friendChatScreen h2, #inviteScreen h2, #coopCareScreen h2, #profileDesignScreen h2, #passportDesignScreen h2, #friendSearchProfileScreen h2, #gamesScreen h2, #gameSnakeScreen h2, #gameCatcherScreen h2, #game2048Screen h2, #gameMemoryScreen h2, #gameFeedCatScreen h2, #gameShootingScreen h2, #gameDiceScreen h2, #gameRainbowScreen h2 { text-align: center; color: #1d3b2a; margin-bottom: 14px; font-size: 24px; }
+
+        .pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+        .pet-list-item { background: #edf7ea; border-radius: 60px; padding: 14px 18px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .pet-list-item:active { background: #d4e8cf; transform: scale(0.98); }
+        .pet-list-item .emoji { font-size: 30px; }
+        .pet-list-item .info { flex: 1; margin-left: 10px; font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        .pet-list-item .info small { font-weight: 400; color: #3f6a4e; font-size: 12px; }
+        .pet-list-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+
+        #createPetScreen .price-info { background: #edf7ea; padding: 10px; border-radius: 40px; margin-bottom: 14px; font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        #createPetScreen input { width: 100%; padding: 14px 18px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; text-align: center; outline: none; margin-bottom: 14px; }
+        #createPetScreen input:focus { border-color: #2b7a4b; }
+        #createPetScreen .egg-preview { font-size: 72px; margin: 6px 0; }
+        #createPetScreen button { width: 100%; padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 19px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        #createPetScreen button:active { transform: translateY(6px); box-shadow: none; }
+        #createPetScreen button:disabled { opacity: 0.4; transform: translateY(0); box-shadow: 0 6px 0 #154d2e; pointer-events: none; }
+        #createInfo { margin-top: 10px; font-size: 14px; color: #3f6a4e; min-height: 22px; }
+
+        .pet-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .pet-choice-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .pet-choice-item:active { transform: scale(0.95); }
+        .pet-choice-item .emoji { font-size: 48px; }
+        .pet-choice-item .name { font-weight: 700; color: #1d3b2a; font-size: 16px; margin-top: 4px; }
+        .pet-choice-item .price { font-size: 14px; color: #3f6a4e; }
+        .pet-choice-item .rarity-badge { display: inline-block; padding: 2px 12px; border-radius: 40px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+        .pet-choice-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .food-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .food-item:active { transform: scale(0.95); }
+        .food-item .emoji { font-size: 40px; }
+        .food-item .name { font-weight: 700; color: #1d3b2a; font-size: 14px; }
+        .food-item .price { font-size: 13px; color: #3f6a4e; }
+        .food-item .xp { font-size: 12px; color: #2b7a4b; }
+        .food-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .drink-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .drink-item { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; }
+        .drink-item:active { transform: scale(0.95); }
+        .drink-item .emoji { font-size: 40px; }
+        .drink-item .name { font-weight: 700; color: #1d3b2a; font-size: 14px; }
+        .drink-item .price { font-size: 13px; color: #3f6a4e; }
+        .drink-item .xp { font-size: 12px; color: #2b7a4b; }
+        .drink-item.disabled { opacity: 0.4; pointer-events: none; }
+
+        .pet-card { background: #fafff7; border-radius: 40px; padding: 18px 14px 16px; border: 3px solid #9ec0a0; text-align: center; margin-top: 6px; }
+        .pet-emoji { font-size: 68px; }
+        .pet-name { font-size: 22px; font-weight: 700; color: #173a24; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .pet-name .rename-btn { background: none; border: 2px solid #7fa98a; border-radius: 40px; padding: 2px 12px; font-size: 12px; cursor: pointer; color: #2b7a4b; font-weight: 600; }
+        .pet-name .rename-btn:active { background: #d4e8cf; }
+        .pet-level { background: #cbe5cd; display: inline-block; padding: 4px 16px; border-radius: 40px; font-weight: 600; color: #144d2a; font-size: 14px; margin: 4px 0 6px; }
+        .xp-bar { background: #d9e8d6; border-radius: 60px; height: 16px; margin: 8px 0 4px; overflow: hidden; border: 2px solid #3f7a57; }
+        .xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #69b87a, #2f8a4e); border-radius: 60px; transition: width 0.4s ease; }
+        .xp-text { font-size: 13px; color: #2e5a3a; }
+
+        .care-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+        .care-buttons button { background: #ebf7e8; border: 2px solid #45835a; border-radius: 60px; padding: 12px 4px; font-weight: 700; color: #1b422b; cursor: pointer; font-size: 13px; box-shadow: 0 4px 0 #588d68; min-height: 44px; }
+        .care-buttons button:active { transform: translateY(4px); box-shadow: none; }
+        .care-buttons button:disabled { opacity: 0.35; transform: translateY(0); box-shadow: 0 4px 0 #588d68; pointer-events: none; }
+        .care-buttons-extra { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 6px 0; }
+        .care-buttons-extra button { background: #ebf7e8; border: 2px solid #45835a; border-radius: 60px; padding: 10px 4px; font-weight: 700; color: #1b422b; cursor: pointer; font-size: 13px; box-shadow: 0 4px 0 #588d68; min-height: 40px; }
+        .care-buttons-extra button:active { transform: translateY(4px); box-shadow: none; }
+        .care-buttons-extra button:disabled { opacity: 0.35; transform: translateY(0); box-shadow: 0 4px 0 #588d68; pointer-events: none; }
+
+        .wish-area { background: #d7ecd3; border-radius: 60px; padding: 12px 14px; margin: 10px 0; border-left: 6px solid #296f42; font-weight: 500; color: #0a2c19; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 15px; }
+        .wish-area .thought { font-size: 24px; }
+
+        .pet-passport-btn { background: #7fa98a; border: none; border-radius: 60px; padding: 10px 18px; color: white; font-weight: 700; font-size: 15px; cursor: pointer; margin: 6px 0; width: 100%; }
+        .pet-passport-btn:active { transform: scale(0.97); }
+
+        .passport-card { background: #fafff7; border-radius: 40px; padding: 22px; border: 3px solid #9ec0a0; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+        .passport-card .big-emoji { font-size: 72px; position: relative; z-index: 2; }
+        .passport-card .field { margin: 10px 0; font-size: 17px; color: #1d3b2a; position: relative; z-index: 2; }
+        .passport-card .field strong { color: #2b7a4b; }
+        .passport-card .rarity { display: inline-block; padding: 4px 18px; border-radius: 40px; font-weight: 700; margin-top: 6px; position: relative; z-index: 2; }
+        .passport-design-btn { background: #7fa98a; border: none; border-radius: 60px; padding: 8px 16px; color: white; font-weight: 700; font-size: 14px; cursor: pointer; margin: 4px; }
+        .passport-design-btn:active { transform: scale(0.95); }
+        .passport-emoji-bg { position: absolute; font-size: 50px; opacity: 0.12; pointer-events: none; z-index: 1; }
+
+        .rarity-common { background: #b8d9b0; color: #1d3b2a; }
+        .rarity-uncommon { background: #8fc9a8; color: #0a2c19; }
+        .rarity-rare { background: #f5c542; color: #4a3800; }
+        .rarity-epic { background: #c084e8; color: #2a0a4a; }
+        .rarity-legendary { background: #ff6b6b; color: #4a0a0a; }
+        .rarity-secret { background: linear-gradient(45deg, #ff6b6b, #feca57, #54a0ff, #1dd1a1); color: #1a1a2e; }
+
+        .profile-card { background: #fafff7; border-radius: 40px; padding: 22px; border: 3px solid #9ec0a0; text-align: center; position: relative; transition: all 0.3s; }
+        .profile-star { position: absolute; top: -10px; right: -10px; font-size: 32px; animation: starGlow 2s infinite; }
+        @keyframes starGlow { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .profile-avatar { font-size: 64px; cursor: pointer; display: inline-block; padding: 8px; border-radius: 60px; background: #edf7ea; border: 3px dashed #7fa98a; }
+        .profile-avatar:active { background: #d4e8cf; }
+        .profile-field { margin: 10px 0; font-size: 17px; color: #1d3b2a; }
+        .profile-field strong { color: #2b7a4b; }
+        .profile-pets-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0; }
+        .profile-pet-badge { background: #edf7ea; padding: 4px 12px; border-radius: 40px; font-size: 18px; border: 2px solid #7fa98a; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .profile-pet-badge:active { background: #d4e8cf; }
+        .avatar-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 10px 0; }
+        .avatar-selector button { font-size: 28px; padding: 6px; border: 3px solid #9ec0a0; border-radius: 16px; background: white; cursor: pointer; }
+        .avatar-selector button:active { transform: scale(0.9); }
+        .avatar-selector button.active { border-color: #2b7a4b; background: #cbe5cd; }
+        .reset-btn { background: #bf5b4a; color: white; border: none; border-radius: 60px; padding: 12px 20px; font-weight: 700; cursor: pointer; margin: 6px 0; }
+        .reset-btn:active { transform: scale(0.95); }
+
+        .friend-add { display: flex; gap: 8px; margin-bottom: 14px; }
+        .friend-add input { flex: 1; padding: 12px 16px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 15px; outline: none; }
+        .friend-add input:focus { border-color: #2b7a4b; }
+        .friend-add button { padding: 12px 18px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 4px 0 #154d2e; white-space: nowrap; }
+        .friend-add button:active { transform: translateY(4px); box-shadow: none; }
+
+        .friend-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+        .friend-item { background: #edf7ea; border-radius: 60px; padding: 12px 16px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .friend-item .info { font-weight: 600; color: #1d3b2a; font-size: 15px; }
+        .friend-item .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .friend-item .actions button { padding: 8px 16px; border: none; border-radius: 40px; font-weight: 700; cursor: pointer; font-size: 13px; min-height: 38px; }
+        .friend-item .actions button:active { transform: scale(0.95); }
+        .btn-accept { background: #2b7a4b; color: white; font-size: 18px; padding: 8px 18px; }
+        .btn-reject { background: #bf5b4a; color: white; font-size: 18px; padding: 8px 18px; }
+        .btn-view { background: #7fa98a; color: white; }
+        .btn-gift { background: #f5c542; color: #4a3800; }
+        .btn-chat { background: #5b8db8; color: white; }
+        .btn-invite { background: #9b59b6; color: white; }
+        .btn-add-friend { background: #2b7a4b; color: white; }
+
+        .friend-requests { background: #fff3e0; border-radius: 20px; padding: 10px 14px; margin-bottom: 14px; border: 2px solid #f5c542; }
+        .friend-requests h4 { color: #4a3800; margin-bottom: 6px; font-size: 15px; }
+        .friend-request-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: white; border-radius: 40px; margin-bottom: 4px; }
+
+        .design-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; }
+        .design-grid button { padding: 10px; border: 3px solid #9ec0a0; border-radius: 20px; cursor: pointer; font-weight: 700; font-size: 14px; background: white; }
+        .design-grid button:active { transform: scale(0.95); }
+        .design-grid button.active { border-color: #2b7a4b; background: #cbe5cd; }
+        .color-btn { width: 36px; height: 36px; border-radius: 50%; border: 3px solid #9ec0a0; cursor: pointer; display: inline-block; }
+        .color-btn:active { transform: scale(0.9); }
+        .color-btn.active { border-color: #2b7a4b; box-shadow: 0 0 8px rgba(43,122,75,0.5); }
+
+        .drawing-canvas { border: 3px solid #7fa98a; border-radius: 20px; background: white; touch-action: none; width: 100%; height: 200px; }
+        .drawing-tools { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; justify-content: center; }
+        .drawing-tools button { padding: 8px 16px; border: 2px solid #7fa98a; border-radius: 40px; background: #f5fcf2; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .drawing-tools button:active { transform: scale(0.95); }
+
+        .admin-panel-grid { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+        .admin-panel-grid button { padding: 18px; border: 3px solid #3f7a57; border-radius: 60px; background: #f5fcf2; font-size: 20px; font-weight: 700; color: #1d3b2a; cursor: pointer; box-shadow: 0 5px 0 #7b9f84; }
+        .admin-panel-grid button:active { transform: translateY(5px); box-shadow: none; }
+        .admin-user-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .admin-user-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .admin-user-item:active { background: #d4e8cf; }
+        .admin-user-item .info { font-weight: 600; color: #1d3b2a; }
+        .admin-user-item .badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .admin-pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .admin-pet-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .admin-pet-item:active { background: #d4e8cf; }
+        .admin-pet-item .emoji { font-size: 30px; }
+        .admin-pet-item .info { flex: 1; margin-left: 12px; font-weight: 600; color: #1d3b2a; }
+        .admin-pet-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .admin-input { width: 100%; padding: 14px 18px; border: 3px solid #9ec0a0; border-radius: 60px; font-size: 16px; text-align: center; outline: none; margin: 10px 0; }
+        .admin-input:focus { border-color: #2b7a4b; }
+        .admin-submit-btn { width: 100%; padding: 16px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 19px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 0 #154d2e; }
+        .admin-submit-btn:active { transform: translateY(6px); box-shadow: none; }
+
+        .chat-container { display: flex; flex-direction: column; height: 350px; background: #fafff7; border-radius: 30px; border: 2px solid #9ec0a0; overflow: hidden; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .chat-message { padding: 8px 14px; border-radius: 20px; max-width: 85%; word-wrap: break-word; font-size: 15px; }
+        .chat-message.me { background: #2b7a4b; color: white; align-self: flex-end; }
+        .chat-message.other { background: #edf7ea; color: #1d3b2a; align-self: flex-start; }
+        .chat-message .sender { font-size: 12px; font-weight: 600; opacity: 0.8; }
+        .chat-input-area { display: flex; gap: 8px; padding: 10px; border-top: 2px solid #9ec0a0; background: #f5fcf2; }
+        .chat-input-area input { flex: 1; padding: 10px 16px; border: 2px solid #9ec0a0; border-radius: 60px; font-size: 15px; outline: none; }
+        .chat-input-area input:focus { border-color: #2b7a4b; }
+        .chat-input-area button { padding: 10px 20px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-weight: 700; cursor: pointer; }
+
+        .coop-container { display: flex; flex-direction: column; gap: 12px; }
+        .coop-pets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .coop-pet-card { background: #fafff7; border-radius: 30px; padding: 14px; border: 3px solid #9ec0a0; text-align: center; }
+        .coop-pet-card .owner-name { font-size: 14px; font-weight: 600; color: #2b7a4b; margin-bottom: 4px; }
+        .coop-pet-card .pet-emoji { font-size: 48px; }
+        .coop-pet-card .pet-name { font-size: 16px; font-weight: 700; color: #173a24; }
+        .coop-pet-card .pet-level { font-size: 13px; color: #3f6a4e; }
+        .coop-pet-card .xp-bar { height: 10px; margin: 6px 0; }
+        .coop-pet-card .care-buttons { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .coop-pet-card .care-buttons button { font-size: 12px; padding: 6px 2px; min-height: 32px; }
+
+        .family-pet-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+        .family-pet-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; }
+        .family-pet-item .emoji { font-size: 30px; }
+        .family-pet-item .info { flex: 1; margin-left: 12px; font-weight: 600; color: #1d3b2a; }
+        .family-pet-item .level-badge { background: #2b7a4b; color: white; padding: 4px 14px; border-radius: 40px; font-size: 13px; font-weight: 600; }
+        .family-pet-item .send-btn { background: #f5c542; border: none; border-radius: 40px; padding: 6px 16px; font-weight: 700; color: #4a3800; cursor: pointer; }
+        .family-pet-item .send-btn:active { transform: scale(0.95); }
+        .family-pet-item .send-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+        .rarity-list { display: flex; flex-direction: column; gap: 10px; }
+        .rarity-item { background: #fafff7; border-radius: 40px; padding: 14px 18px; border: 3px solid #9ec0a0; display: flex; align-items: center; gap: 14px; }
+        .rarity-item .emoji { font-size: 36px; }
+        .rarity-item .info { flex: 1; }
+        .rarity-item .info .name { font-weight: 700; color: #1d3b2a; font-size: 17px; }
+        .rarity-item .info .chance { color: #3f6a4e; font-size: 13px; }
+
+        .invite-list { display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto; }
+        .invite-item { background: #edf7ea; border-radius: 60px; padding: 14px 20px; border: 2px solid #7fa98a; display: flex; justify-content: space-between; align-items: center; }
+        .invite-item .info { font-weight: 600; color: #1d3b2a; }
+        .invite-item .actions { display: flex; gap: 8px; }
+        .invite-item .actions button { padding: 8px 20px; border: none; border-radius: 40px; font-weight: 700; cursor: pointer; font-size: 18px; }
+
+        .xp-popup { position: fixed; font-size: 28px; font-weight: 800; color: #2b7a4b; pointer-events: none; z-index: 999; animation: xpFloat 1.2s ease-out forwards; }
+        @keyframes xpFloat { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.3); } }
+
+        .currency-tooltip { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 999; padding: 20px; }
+        .currency-tooltip.show { display: flex; }
+        .currency-tooltip .content { background: #fafff7; border-radius: 40px; padding: 30px 24px; max-width: 400px; border: 3px solid #9ec0a0; text-align: center; }
+        .currency-tooltip .content h3 { font-size: 28px; color: #1d3b2a; margin-bottom: 12px; }
+        .currency-tooltip .content p { font-size: 16px; color: #1d3b2a; line-height: 1.6; }
+        .currency-tooltip .content button { margin-top: 18px; padding: 12px 30px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 18px; font-weight: 700; cursor: pointer; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 999; padding: 20px; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: #fafff7; border-radius: 40px; padding: 30px 24px; max-width: 400px; width: 100%; border: 3px solid #9ec0a0; text-align: center; }
+        .modal-content h3 { font-size: 24px; color: #1d3b2a; margin-bottom: 12px; }
+        .modal-content p { font-size: 16px; color: #1d3b2a; line-height: 1.6; margin-bottom: 16px; white-space: pre-line; }
+        .modal-content .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .modal-content .modal-actions button { padding: 12px 30px; border: none; border-radius: 60px; font-size: 18px; font-weight: 700; cursor: pointer; min-width: 80px; }
+        .modal-content .modal-actions .btn-confirm { background: #2b7a4b; color: white; }
+        .modal-content .modal-actions .btn-cancel { background: #bf5b4a; color: white; }
+        .modal-content .modal-actions button:active { transform: scale(0.95); }
+
+        .toast-notification { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #2b7a4b; color: white; padding: 14px 28px; border-radius: 60px; font-weight: 700; font-size: 17px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 9999; animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards; }
+        .toast-notification.error { background: #bf5b4a; }
+        @keyframes toastIn { 0% { opacity: 0; transform: translateX(-50%) translateY(30px); } 100% { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes toastOut { 0% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+
+        .pet-list::-webkit-scrollbar, .friend-list::-webkit-scrollbar, .family-pet-list::-webkit-scrollbar, .admin-user-list::-webkit-scrollbar, .admin-pet-list::-webkit-scrollbar, .chat-messages::-webkit-scrollbar, .invite-list::-webkit-scrollbar { width: 4px; }
+        .pet-list::-webkit-scrollbar-thumb, .friend-list::-webkit-scrollbar-thumb, .family-pet-list::-webkit-scrollbar-thumb, .admin-user-list::-webkit-scrollbar-thumb, .admin-pet-list::-webkit-scrollbar-thumb, .chat-messages::-webkit-scrollbar-thumb, .invite-list::-webkit-scrollbar-thumb { background: #7fa98a; border-radius: 10px; }
+
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+        .game-card { background: #fafff7; border-radius: 30px; padding: 20px 12px; border: 3px solid #9ec0a0; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .game-card:active { transform: scale(0.95); background: #edf7ea; }
+        .game-card .emoji { font-size: 48px; }
+        .game-card .name { font-weight: 700; color: #1d3b2a; font-size: 16px; margin-top: 6px; }
+        .game-card .desc { font-size: 12px; color: #3f6a4e; margin-top: 4px; }
+
+        .game-container { background: #fafff7; border-radius: 30px; padding: 16px; border: 3px solid #9ec0a0; min-height: 350px; position: relative; }
+        .game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); border-radius: 27px; display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 10; color: white; }
+        .game-overlay.show { display: flex; }
+        .game-overlay .score { font-size: 28px; font-weight: 700; }
+        .game-overlay .btn-restart { margin-top: 16px; padding: 12px 30px; background: #2b7a4b; border: none; border-radius: 60px; color: white; font-size: 18px; font-weight: 700; cursor: pointer; }
+        .game-score { text-align: center; font-size: 20px; font-weight: 700; color: #1d3b2a; margin-bottom: 10px; }
+        .game-controls { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .game-controls button { padding: 10px 20px; background: #2b7a4b; border: none; border-radius: 40px; color: white; font-weight: 700; cursor: pointer; font-size: 16px; min-width: 50px; }
+        .game-controls button:active { transform: scale(0.95); }
+
+        #snakeCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #catcherCanvas { display: block; margin: 0 auto; background: #1a2a3a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.7/1; }
+        #game2048Canvas { display: block; margin: 0 auto; background: #bbada0; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #memoryCanvas { display: block; margin: 0 auto; background: #2a3a2a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #feedCatCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.7/1; }
+        #shootingCanvas { display: block; margin: 0 auto; background: #1a2a3a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+        #diceCanvas { display: block; margin: 0 auto; background: #1a2a1a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 0.8/1; }
+        #rainbowCanvas { display: block; margin: 0 auto; background: #1a1a2a; border-radius: 12px; touch-action: none; width: 100%; max-width: 380px; aspect-ratio: 1/1; }
+
+        .game-currency { text-align: center; font-size: 16px; color: #2b7a4b; font-weight: 600; margin: 8px 0; }
+
+        @media (max-width: 420px) { .container { padding: 16px 12px 20px; border-radius: 32px; } .currency-display { font-size: 15px; padding: 4px 12px 4px 10px; top: 10px; right: 12px; } .back-btn { top: 10px; left: 10px; font-size: 26px; } .pet-emoji { font-size: 56px; } .care-buttons { grid-template-columns: repeat(2, 1fr); } .care-buttons-extra { grid-template-columns: repeat(2, 1fr); } .avatar-selector { grid-template-columns: repeat(4, 1fr); } .friend-add { flex-direction: column; } .menu-buttons button { font-size: 16px; padding: 14px; } .pet-name { font-size: 19px; } .pet-choice-grid { grid-template-columns: repeat(3, 1fr); } .food-grid { grid-template-columns: repeat(3, 1fr); } .drink-grid { grid-template-columns: repeat(2, 1fr); } .coop-pets { grid-template-columns: 1fr; } .design-grid { grid-template-columns: repeat(4, 1fr); } .game-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 360px) { .container { padding: 12px 8px 16px; } .currency-display { font-size: 13px; padding: 3px 10px 3px 8px; } .care-buttons button { font-size: 11px; padding: 8px 2px; min-height: 36px; } .pet-list-item { padding: 10px 14px; } }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <div class="currency-display" id="currencyDisplay">💲 <span id="currencyAmount">0</span></div>
+
+    <div class="currency-tooltip" id="currencyTooltip">
+        <div class="content">
+            <h3>💲 Деньга</h3>
+            <p>Это валюта, с помощью которой ты можешь покупать яйца питомцев, покупать еду питомцам, менять имя питомцу и многое другое. Ты можешь дарить деньгу другу.</p>
+            <button id="closeCurrencyTooltip">✨ Понятно!</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content" id="modalContent">
+            <h3 id="modalTitle">Подтверждение</h3>
+            <p id="modalText">Вы уверены?</p>
+            <div class="modal-actions">
+                <button class="btn-confirm" id="modalConfirm">✅ Да</button>
+                <button class="btn-cancel" id="modalCancel">❌ Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-btn" id="backBtn">←</button>
+
+    <!-- ===== АВТОРИЗАЦИЯ ===== -->
+    <div id="authScreen">
+        <h1>🐣 Тамагочи</h1>
+        <div class="sub">Войди или создай аккаунт</div>
+        <div class="auth-tabs">
+            <button id="loginTab" class="active">🔑 Войти</button>
+            <button id="registerTab">✨ Создать</button>
+        </div>
+        <div class="auth-form" id="authForm">
+            <input type="text" id="authUsername" placeholder="Юзернейм" maxlength="30">
+            <input type="password" id="authPassword" placeholder="Пароль" maxlength="30">
+            <button id="authSubmitBtn">Войти</button>
+            <div class="auth-error" id="authError"></div>
+            <div class="auth-success" id="authSuccess"></div>
+        </div>
+    </div>
+
+    <!-- ===== ГЛАВНОЕ МЕНЮ ===== -->
+    <div id="mainMenu">
+        <h2>🏠 Главная</h2>
+        <div class="greeting" id="greetingText">Привет, игрок!</div>
+        <div class="menu-buttons">
+            <button id="toMyPetsBtn">🐾 Мои питомцы</button>
+            <button id="toCreatePetBtn">🥚 Создать питомца</button>
+            <button id="toFriendsBtn">👥 Мои друзья <span id="friendsNotification"></span></button>
+            <button id="toProfileBtn">👤 Мой профиль</button>
+            <button id="toRarityBtn">⭐ Редкости питомцев</button>
+            <button id="toFamilyBtn">🏡 Семья питомца</button>
+            <button id="adminAddBtn" class="admin-btn" style="display:none;">👑 Админ-панель</button>
+        </div>
+        <div style="margin-top:18px;">
+            <button class="btn-danger" id="logoutBtn" style="padding:12px 30px; border-radius:60px; border:none; font-weight:600;">🚪 Выйти</button>
+        </div>
+        <div class="footer">❤️ заботься — и питомцы вырастут</div>
+    </div>
+
+    <!-- ===== МОИ ПИТОМЦЫ ===== -->
+    <div id="myPetsScreen">
+        <h2>🐾 Мои питомцы</h2>
+        <div class="pet-list" id="petList"></div>
+        <button class="nav-btn" id="toMainFromPets">← Назад в меню</button>
+    </div>
+
+    <!-- ===== СОЗДАТЬ ПИТОМЦА ===== -->
+    <div id="createPetScreen">
+        <h2>🥚 Создать питомца</h2>
+        <div class="info">Придумайте имя для питомца</div>
+        <div class="price-info" id="createPriceInfo">💰 Бесплатно!</div>
+        <input type="text" id="petNameInput" placeholder="Имя питомца..." maxlength="20">
+        <button id="choosePetTypeBtn" style="margin-bottom:14px; background:#7fa98a; box-shadow:0 6px 0 #5a7d63; border:none; border-radius:60px; padding:12px; color:white; font-weight:700; font-size:16px; cursor:pointer; width:100%;">🎯 Выбрать питомца</button>
+        <div id="selectedPetDisplay" style="font-size:20px; margin-bottom:14px; background:#edf7ea; padding:10px; border-radius:40px;">🐣 Случайный питомец</div>
+        <div class="egg-preview">🥚</div>
+        <button id="createPetConfirmBtn">➕ Создать питомца</button>
+        <div id="createInfo"></div>
+        <button class="nav-btn" id="toMainFromCreate">← Назад в меню</button>
+    </div>
+
+    <!-- ===== ВЫБОР ПИТОМЦА ===== -->
+    <div id="choosePetScreen">
+        <h2>🎯 Выберите питомца</h2>
+        <div class="pet-choice-grid" id="petChoiceGrid"></div>
+        <button class="nav-btn" id="backFromChoosePet">← Назад</button>
+    </div>
+
+    <!-- ===== ВЫБОР ЕДЫ ===== -->
+    <div id="foodChoiceScreen">
+        <h2>🍽️ Чем покормить?</h2>
+        <div class="food-grid" id="foodGrid"></div>
+        <button class="nav-btn" id="backFromFood">← Назад</button>
+    </div>
+
+    <!-- ===== ВЫБОР НАПИТКОВ ===== -->
+    <div id="drinkChoiceScreen">
+        <h2>🥤 Что выпить?</h2>
+        <div class="drink-grid" id="drinkGrid"></div>
+        <button class="nav-btn" id="backFromDrink">← Назад</button>
+    </div>
+
+    <!-- ===== УХОД ЗА ПИТОМЦЕМ ===== -->
+    <div id="petCareScreen">
+        <div class="pet-card">
+            <div class="pet-emoji" id="careEmoji">🥚</div>
+            <div class="pet-name">
+                <span id="careName">Питомец</span>
+                <button class="rename-btn" id="renamePetBtn">✏️</button>
+            </div>
+            <div class="pet-level" id="careLevel">❤️ уровень 0</div>
+            <div class="xp-bar"><div class="xp-fill" id="careXpFill" style="width:0%"></div></div>
+            <div class="xp-text" id="careXpText">опыт 0 / 100</div>
+        </div>
+        <div class="wish-area" id="careWish"><span class="thought">💭</span> питомец пока ничего не хочет</div>
+        <div class="care-buttons">
+            <button id="careFeed">🍗 Кормить</button>
+            <button id="careDrink">💧 Поить</button>
+            <button id="careWash">🧼 Мыть</button>
+            <button id="carePlay" disabled>🎮 Играть</button>
+        </div>
+        <div class="care-buttons-extra">
+            <button id="careBrush">🪥 Чистить зубы</button>
+            <button id="careToilet">🚽 В туалет</button>
+        </div>
+        <button class="pet-passport-btn" id="toPassportBtn">📋 Паспорт питомца</button>
+        <button class="nav-btn" id="backFromCare">← Назад к питомцам</button>
+    </div>
+
+    <!-- ===== ПАСПОРТ ===== -->
+    <div id="petPassportScreen">
+        <h2>📋 Паспорт питомца</h2>
+        <div class="passport-card" id="passportCard">
+            <div class="big-emoji" id="passportEmoji">🥚</div>
+            <div class="field"><strong>Имя:</strong> <span id="passportName">—</span></div>
+            <div class="field"><strong>Вид:</strong> <span id="passportType">—</span></div>
+            <div class="field"><strong>Возраст:</strong> <span id="passportAge">—</span></div>
+            <div class="field"><strong>Создан:</strong> <span id="passportCreated">—</span></div>
+            <div class="field"><strong>Уровень:</strong> <span id="passportLevel">0</span></div>
+            <div id="passportRarity" class="rarity rarity-common">Обычная</div>
+            <div style="margin-top:12px;">
+                <button class="passport-design-btn" id="designPassportBtn">✏️ Оформить паспорт</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromPassport">← Назад к питомцу</button>
+    </div>
+
+    <!-- ===== ДИЗАЙН ПАСПОРТА ===== -->
+    <div id="passportDesignScreen">
+        <h2>🎨 Оформление паспорта</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:10px; font-size:14px;">Выберите стиль для паспорта питомца</div>
+        <div class="passport-card" id="designPreviewCard" style="margin-bottom:12px;">
+            <div class="big-emoji" id="designPreviewEmoji">🐶</div>
+            <div class="field"><strong>Имя:</strong> <span id="designPreviewName">Пушистик</span></div>
+            <div class="field"><strong>Вид:</strong> <span id="designPreviewType">Собака</span></div>
+            <div class="field"><strong>Возраст:</strong> <span id="designPreviewAge">5 дн.</span></div>
+            <div class="field"><strong>Уровень:</strong> <span id="designPreviewLevel">10</span></div>
+            <div class="rarity rarity-common">Обычная</div>
+        </div>
+        <div><strong>1. Фон:</strong></div>
+        <div class="design-grid" id="bgColorGrid"></div>
+        <div><strong>2. Цвет заголовков (Имя, Вид...):</strong></div>
+        <div class="design-grid" id="titleColorGrid"></div>
+        <div><strong>3. Цвет текста (значений):</strong></div>
+        <div class="design-grid" id="textColorGrid"></div>
+        <div><strong>4. Эмодзи на фон (4💲 за штуку):</strong></div>
+        <div class="design-grid" id="emojiGrid"></div>
+        <div style="margin-top:12px;">
+            <button class="reset-btn" id="resetPassportDesignBtn">🗑️ Сбросить оформление</button>
+        </div>
+        <button class="nav-btn" id="savePassportDesignBtn">💾 Сохранить</button>
+        <button class="nav-btn" id="backFromPassportDesign">← Назад</button>
+    </div>
+
+    <!-- ===== ПРОФИЛЬ ===== -->
+    <div id="profileScreen">
+        <h2>👤 Мой профиль</h2>
+        <div class="profile-card" id="profileCard">
+            <div class="profile-star" id="profileStar" style="display:none;">⭐</div>
+            <div class="profile-avatar" id="avatarDisplay">🚀</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span id="profileUsername">—</span></div>
+            <div class="profile-field"><strong>💲 Баланс:</strong> <span id="profileCurrency">0</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span id="profilePetCount">0</span></div>
+            <div class="profile-field"><strong>Аккаунт создан:</strong> <span id="profileCreated">—</span></div>
+            <div class="profile-pets-list" id="profilePetsList"></div>
+            <div style="margin-top:14px;">
+                <button id="toggleAvatarBtn" style="padding:10px 20px; background:#7fa98a; border:none; border-radius:60px; color:white; font-weight:700; cursor:pointer;">🎨 Сменить аватар</button>
+                <button id="designProfileBtn" style="padding:10px 20px; background:#f5c542; border:none; border-radius:60px; color:#4a3800; font-weight:700; cursor:pointer; margin-left:8px;">✏️ Оформить профиль</button>
+                <button class="reset-btn" id="resetProfileDesignBtn" style="margin-top:10px;">🗑️ Сбросить оформление</button>
+            </div>
+            <div id="avatarSelector" style="display:none; margin-top:10px;">
+                <div class="avatar-selector" id="avatarGrid"></div>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromProfile">← Назад в меню</button>
+    </div>
+
+    <!-- ===== ДИЗАЙН ПРОФИЛЯ ===== -->
+    <div id="profileDesignScreen">
+        <h2>🎨 Оформление профиля</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:10px; font-size:14px;">Настройте внешний вид вашего профиля</div>
+        <div class="profile-card" id="profileDesignPreview" style="margin-bottom:12px;">
+            <div class="profile-avatar" style="font-size:64px;">😊</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span>Игрок</span></div>
+            <div class="profile-field"><strong>💲 Баланс:</strong> <span>100</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span>3</span></div>
+        </div>
+        <div><strong>1. Фон:</strong></div>
+        <div class="design-grid" id="profileBgColorGrid"></div>
+        <div><strong>2. Цвет заголовков:</strong></div>
+        <div class="design-grid" id="profileTitleColorGrid"></div>
+        <div><strong>3. Цвет текста:</strong></div>
+        <div class="design-grid" id="profileTextColorGrid"></div>
+        <button class="nav-btn" id="saveProfileDesignBtn">💾 Сохранить</button>
+        <button class="nav-btn" id="backFromProfileDesign">← Назад</button>
+    </div>
+
+    <!-- ===== ДРУЗЬЯ ===== -->
+    <div id="friendsScreen">
+        <h2>👥 Мои друзья</h2>
+        <div class="friend-add">
+            <input type="text" id="friendSearchInput" placeholder="Юзернейм друга..." maxlength="30">
+            <button id="friendSearchBtn">🔍 Найти</button>
+        </div>
+        <div id="friendSearchResult" style="margin-bottom:10px; font-size:14px;"></div>
+        <div id="friendRequestsContainer"></div>
+        <div id="friendInvitesContainer" style="margin-bottom:10px;"></div>
+        <div class="friend-list" id="friendsList"></div>
+        <div id="friendGiftsContainer" style="margin-top:10px;"></div>
+        <button class="nav-btn" id="backFromFriends">← Назад в меню</button>
+    </div>
+
+    <!-- ===== ПОИСК ПРОФИЛЯ ДЛЯ ЗАЯВКИ ===== -->
+    <div id="friendSearchProfileScreen">
+        <h2>👤 Профиль пользователя</h2>
+        <div class="profile-card" id="searchProfileCard">
+            <div class="profile-avatar" id="searchProfileAvatar" style="font-size:64px;">🚀</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span id="searchProfileUsername">—</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span id="searchProfilePetCount">0</span></div>
+            <div class="profile-pets-list" id="searchProfilePetsList"></div>
+            <div style="margin-top:14px;">
+                <button id="searchProfileAddFriendBtn" class="btn-add-friend" style="padding:12px 30px; border:none; border-radius:60px; font-weight:700; font-size:18px; cursor:pointer;">➕ Добавить в друзья</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromSearchProfile">← Назад</button>
+    </div>
+
+    <!-- ===== ПРОФИЛЬ ДРУГА ===== -->
+    <div id="friendProfileScreen">
+        <h2>👤 Профиль друга</h2>
+        <div class="profile-card" id="friendProfileCard">
+            <div class="profile-avatar" id="friendAvatar" style="font-size:64px;">🚀</div>
+            <div class="profile-field"><strong>Юзернейм:</strong> <span id="friendUsername">—</span></div>
+            <div class="profile-field"><strong>💲 Баланс:</strong> <span id="friendCurrency">0</span></div>
+            <div class="profile-field"><strong>Питомцев:</strong> <span id="friendPetCount">0</span></div>
+            <div class="profile-field"><strong>Аккаунт создан:</strong> <span id="friendCreated">—</span></div>
+            <div class="profile-pets-list" id="friendPetsList"></div>
+            <div style="margin-top:14px;">
+                <button id="giftFriendBtn" style="padding:10px 20px; background:#f5c542; border:none; border-radius:60px; color:#4a3800; font-weight:700; cursor:pointer;">🎁 Подарить валюту</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromFriendProfile">← Назад к друзьям</button>
+    </div>
+
+    <!-- ===== ЧАТ С ДРУГОМ ===== -->
+    <div id="friendChatScreen">
+        <h2 id="chatTitle">💬 Чат</h2>
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Сообщение..." maxlength="200">
+                <button id="chatSendBtn">📨</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromChat">← Назад к друзьям</button>
+    </div>
+
+    <!-- ===== ПРИГЛАШЕНИЕ ===== -->
+    <div id="inviteScreen">
+        <h2>🎮 Пригласить друга</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Выберите питомца для совместного ухода</div>
+        <div class="pet-list" id="invitePetList"></div>
+        <button class="nav-btn" id="backFromInvite">← Назад</button>
+    </div>
+
+    <!-- ===== СОВМЕСТНЫЙ УХОД ===== -->
+    <div id="coopCareScreen">
+        <h2>🤝 Совместный уход</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:10px; font-size:14px;">Ухаживайте за питомцами вместе!</div>
+        <div class="coop-container">
+            <div class="coop-pets" id="coopPetsContainer"></div>
+            <div class="chat-container" style="height:150px;">
+                <div class="chat-messages" id="coopChatMessages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="coopChatInput" placeholder="Сообщение..." maxlength="200">
+                    <button id="coopChatSendBtn">📨</button>
+                </div>
+            </div>
+            <div style="margin-top:8px;">
+                <button id="toggleDrawingBtn" style="padding:8px 16px; background:#7fa98a; border:none; border-radius:60px; color:white; font-weight:700; cursor:pointer; width:100%;">🎨 Доска для рисования</button>
+                <div id="drawingArea" style="display:none; margin-top:8px;">
+                    <canvas class="drawing-canvas" id="drawingCanvas"></canvas>
+                    <div class="drawing-tools">
+                        <button id="drawColorBlack">⚫</button>
+                        <button id="drawColorRed">🔴</button>
+                        <button id="drawColorBlue">🔵</button>
+                        <button id="drawColorGreen">🟢</button>
+                        <button id="drawColorYellow">🟡</button>
+                        <button id="drawClearBtn">🗑️ Очистить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromCoop">← Выйти</button>
+    </div>
+
+    <!-- ===== СЕМЬЯ ===== -->
+    <div id="familyScreen">
+        <h2>🏡 Семья питомца</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Отправьте питомца в семью после 15 уровня. Он найдёт пару и уйдёт от вас.</div>
+        <div class="family-pet-list" id="familyPetList"></div>
+        <button class="nav-btn" id="backFromFamily">← Назад в меню</button>
+    </div>
+
+    <!-- ===== РЕДКОСТИ ===== -->
+    <div id="rarityScreen">
+        <h2>⭐ Редкости питомцев</h2>
+        <div class="rarity-list" id="rarityList"></div>
+        <button class="nav-btn" id="backFromRarity">← Назад в меню</button>
+    </div>
+
+    <!-- ===== ИГРЫ ===== -->
+    <div id="gamesScreen">
+        <h2>🎮 Мини-игры</h2>
+        <div class="game-currency" id="gameCurrencyDisplay">💰 Заработано за игру: 0 💲</div>
+        <div class="game-grid">
+            <div class="game-card" data-game="snake">
+                <div class="emoji">🐍</div>
+                <div class="name">Змейка</div>
+                <div class="desc">Собирай еду, не врезайся</div>
+            </div>
+            <div class="game-card" data-game="catcher">
+                <div class="emoji">🧺</div>
+                <div class="name">Ловилка</div>
+                <div class="desc">Лови падающие фрукты</div>
+            </div>
+            <div class="game-card" data-game="2048">
+                <div class="emoji">🔢</div>
+                <div class="name">Числовой слайд</div>
+                <div class="desc">Собери 2048!</div>
+            </div>
+            <div class="game-card" data-game="memory">
+                <div class="emoji">🧠</div>
+                <div class="name">Карточная память</div>
+                <div class="desc">Найди все пары</div>
+            </div>
+            <div class="game-card" data-game="feedcat">
+                <div class="emoji">🐱</div>
+                <div class="name">Покорми кота</div>
+                <div class="desc">Лови рыбу и колбасу</div>
+            </div>
+            <div class="game-card" data-game="shooting">
+                <div class="emoji">🎯</div>
+                <div class="name">Тир</div>
+                <div class="desc">Сбивай цели за 15 сек</div>
+            </div>
+            <div class="game-card" data-game="dice">
+                <div class="emoji">🎲</div>
+                <div class="name">Кости</div>
+                <div class="desc">Угадай выпавшее число</div>
+            </div>
+            <div class="game-card" data-game="rainbow">
+                <div class="emoji">🌈</div>
+                <div class="name">Радуга</div>
+                <div class="desc">Собери радугу по порядку</div>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromGames">← Назад к питомцу</button>
+    </div>
+
+    <!-- ===== ИГРА: ЗМЕЙКА ===== -->
+    <div id="gameSnakeScreen">
+        <h2>🐍 Змейка</h2>
+        <div class="game-score">Счёт: <span id="snakeScore">0</span> | 💲 <span id="snakeCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="snakeCanvas" width="400" height="400"></canvas>
+            <div class="game-overlay" id="snakeOverlay">
+                <div class="score">🏆 <span id="snakeFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="snakeFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="snakeRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button id="snakeUp">⬆️</button>
+            <button id="snakeLeft">⬅️</button>
+            <button id="snakeDown">⬇️</button>
+            <button id="snakeRight">➡️</button>
+        </div>
+        <button class="nav-btn" id="backFromSnake">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: ЛОВИЛКА ===== -->
+    <div id="gameCatcherScreen">
+        <h2>🧺 Ловилка</h2>
+        <div class="game-score">Счёт: <span id="catcherScore">0</span> | 💲 <span id="catcherCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="catcherCanvas" width="350" height="500"></canvas>
+            <div class="game-overlay" id="catcherOverlay">
+                <div class="score">🏆 <span id="catcherFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="catcherFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="catcherRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromCatcher">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: 2048 ===== -->
+    <div id="game2048Screen">
+        <h2>🔢 Числовой слайд (2048)</h2>
+        <div class="game-score">Счёт: <span id="game2048Score">0</span> | 💲 <span id="game2048Currency">0</span></div>
+        <div class="game-container">
+            <canvas id="game2048Canvas" width="400" height="400"></canvas>
+            <div class="game-overlay" id="game2048Overlay">
+                <div class="score">🏆 <span id="game2048FinalScore">0</span></div>
+                <div>💰 Заработано: <span id="game2048FinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="game2048RestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button id="game2048Up">⬆️</button>
+            <button id="game2048Left">⬅️</button>
+            <button id="game2048Down">⬇️</button>
+            <button id="game2048Right">➡️</button>
+        </div>
+        <button class="nav-btn" id="backFrom2048">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: КАРТОЧНАЯ ПАМЯТЬ ===== -->
+    <div id="gameMemoryScreen">
+        <h2>🧠 Карточная память</h2>
+        <div class="game-score">Ходы: <span id="memoryMoves">0</span> | Пар: <span id="memoryPairs">0</span>/6 | 💲 <span id="memoryCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="memoryCanvas" width="400" height="400"></canvas>
+            <div class="game-overlay" id="memoryOverlay">
+                <div class="score">🏆 <span id="memoryFinalScore">0</span> ходов</div>
+                <div>💰 Заработано: <span id="memoryFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="memoryRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromMemory">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: ПОКОРМИ КОТА ===== -->
+    <div id="gameFeedCatScreen">
+        <h2>🐱 Покорми кота</h2>
+        <div class="game-score">❤️ Жизни: <span id="feedCatLives">3</span> | Счёт: <span id="feedCatScore">0</span> | 💲 <span id="feedCatCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="feedCatCanvas" width="350" height="500"></canvas>
+            <div class="game-overlay" id="feedCatOverlay">
+                <div class="score">🏆 <span id="feedCatFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="feedCatFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="feedCatRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button id="feedCatLeft">⬅️</button>
+            <button id="feedCatRight">➡️</button>
+        </div>
+        <button class="nav-btn" id="backFromFeedCat">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: ТИР ===== -->
+    <div id="gameShootingScreen">
+        <h2>🎯 Тир</h2>
+        <div class="game-score">Время: <span id="shootingTime">15</span>с | Очки: <span id="shootingScore">0</span> | 💲 <span id="shootingCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="shootingCanvas" width="400" height="400"></canvas>
+            <div class="game-overlay" id="shootingOverlay">
+                <div class="score">🏆 <span id="shootingFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="shootingFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="shootingRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromShooting">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: КОСТИ ===== -->
+    <div id="gameDiceScreen">
+        <h2>🎲 Кости</h2>
+        <div class="game-score">Счёт: <span id="diceScore">0</span> | 💲 <span id="diceCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="diceCanvas" width="350" height="400"></canvas>
+            <div class="game-overlay" id="diceOverlay">
+                <div class="score">🏆 <span id="diceFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="diceFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="diceRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <div class="game-controls">
+            <button id="diceEven">Чётное</button>
+            <button id="diceOdd">Нечётное</button>
+            <button id="diceExact1">1</button>
+            <button id="diceExact2">2</button>
+            <button id="diceExact3">3</button>
+            <button id="diceExact4">4</button>
+            <button id="diceExact5">5</button>
+            <button id="diceExact6">6</button>
+        </div>
+        <button class="nav-btn" id="backFromDice">← Назад к играм</button>
+    </div>
+
+    <!-- ===== ИГРА: РАДУГА ===== -->
+    <div id="gameRainbowScreen">
+        <h2>🌈 Радуга</h2>
+        <div class="game-score">Собрано: <span id="rainbowProgress">0</span>/7 | 💲 <span id="rainbowCurrency">0</span></div>
+        <div class="game-container">
+            <canvas id="rainbowCanvas" width="400" height="400"></canvas>
+            <div class="game-overlay" id="rainbowOverlay">
+                <div class="score">🏆 <span id="rainbowFinalScore">0</span></div>
+                <div>💰 Заработано: <span id="rainbowFinalCurrency">0</span> 💲</div>
+                <button class="btn-restart" id="rainbowRestartBtn">🔄 Играть снова</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="backFromRainbow">← Назад к играм</button>
+    </div>
+
+    <!-- ===== АДМИН-ПАНЕЛЬ ===== -->
+    <div id="adminScreen">
+        <h2>👑 Админ-панель</h2>
+        <div class="admin-panel-grid">
+            <button id="adminSendCurrencyBtn">💲 Отправить деньгу</button>
+            <button id="adminTakeCurrencyBtn">💲 Забрать деньгу</button>
+            <button id="adminAddLevelBtn">📈 Добавить уровень</button>
+        </div>
+        <button class="nav-btn" id="backFromAdmin">← Назад в меню</button>
+    </div>
+
+    <div id="adminSendCurrencyScreen">
+        <h2>💲 Отправить деньгу</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Выберите пользователя</div>
+        <div class="admin-user-list" id="adminUserList"></div>
+        <button class="nav-btn" id="backFromAdminSend">← Назад</button>
+    </div>
+
+    <div id="adminTakeCurrencyScreen">
+        <h2>💲 Забрать деньгу</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Выберите пользователя</div>
+        <div class="admin-user-list" id="adminTakeUserList"></div>
+        <button class="nav-btn" id="backFromAdminTake">← Назад</button>
+    </div>
+
+    <div id="adminAddLevelUserScreen">
+        <h2>📈 Выберите пользователя</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Выберите пользователя, чьего питомца хотите прокачать</div>
+        <div class="admin-user-list" id="adminLevelUserList"></div>
+        <button class="nav-btn" id="backFromAdminLevelUser">← Назад</button>
+    </div>
+
+    <div id="adminSelectPetScreen">
+        <h2>📈 Выберите питомца</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Выберите питомца для прокачки</div>
+        <div class="admin-pet-list" id="adminPetList"></div>
+        <button class="nav-btn" id="backFromAdminPet">← Назад</button>
+    </div>
+
+    <div id="adminLevelScreen">
+        <h2>📈 Добавить уровень</h2>
+        <div style="text-align:center; color:#3f6a4e; margin-bottom:14px; font-size:14px;">Введите уровень для питомца</div>
+        <input type="number" id="adminLevelInput" class="admin-input" placeholder="До какого уровня прокачать?" min="1" max="100">
+        <button class="admin-submit-btn" id="adminLevelSubmitBtn">📈 Прокачать</button>
+        <button class="nav-btn" id="backFromAdminLevel">← Назад</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ===== НАСТРОЙКИ JSONBIN =====
+        const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6a57903fda38895dfe612e49';
+        const JSONBIN_KEY = '$2a$10$NRlu30hrEBtVX5nTL5UWAOUbBx0XYQUlrUCNiwhDmnlle.odc67yS';
+
+        // ===== АДМИН-АККАУНТ =====
+        const ADMIN_USER = 'воздух';
+        const ADMIN_PASSWORD = 'airlelele14251526';
+
+        // ===== ПИТОМЦЫ =====
+        const PET_TYPES = {
+            'собака': { emoji: '🐶', rarity: 'common', chance: 18, label: 'Обычная', price: 60 },
+            'кошка': { emoji: '🐱', rarity: 'common', chance: 18, label: 'Обычная', price: 60 },
+            'обезьяна': { emoji: '🐒', rarity: 'uncommon', chance: 9, label: 'Необычная', price: 150 },
+            'тиранозавр': { emoji: '🦖', rarity: 'uncommon', chance: 7, label: 'Необычная', price: 150 },
+            'баран': { emoji: '🐏', rarity: 'uncommon', chance: 8, label: 'Необычная', price: 150 },
+            'еж': { emoji: '🦔', rarity: 'uncommon', chance: 8, label: 'Необычная', price: 150 },
+            'ленивец': { emoji: '🦥', rarity: 'uncommon', chance: 7, label: 'Необычная', price: 150 },
+            'сова': { emoji: '🦉', rarity: 'uncommon', chance: 7, label: 'Необычная', price: 150 },
+            'ящерица': { emoji: '🦎', rarity: 'rare', chance: 3, label: 'Редкая', price: 400 },
+            'черепаха': { emoji: '🐢', rarity: 'rare', chance: 2, label: 'Редкая', price: 400 },
+            'медуза': { emoji: '🪼', rarity: 'rare', chance: 2, label: 'Редкая', price: 400 },
+            'феникс': { emoji: '🐦‍🔥', rarity: 'legendary', chance: 1.5, label: 'Легендарная', price: 800 },
+            'скорпион': { emoji: '🦂', rarity: 'secret', chance: 0, label: 'Секретная', price: 1000 },
+        };
+
+        const RARITY_ORDER = ['common', 'uncommon', 'rare', 'legendary', 'secret'];
+        const PET_KEYS = ['собака', 'кошка', 'обезьяна', 'тиранозавр', 'баран', 'еж', 'ленивец', 'сова', 'ящерица', 'черепаха', 'медуза', 'феникс', 'скорпион'];
+
+        // ===== КОНСТАНТЫ =====
+        const FOODS = {
+            '🍎': { name: 'Яблоко', price: 2, minLevel: 0, xp: 10 },
+            '🍌': { name: 'Банан', price: 4, minLevel: 4, xp: 10 },
+            '🫐': { name: 'Голубика', price: 4, minLevel: 4, xp: 10 },
+            '🍔': { name: 'Бургер', price: 5, minLevel: 4, xp: 10 },
+            '🍣': { name: 'Суши', price: 5, minLevel: 4, xp: 11 },
+            '🍪': { name: 'Печенье', price: 5, minLevel: 4, xp: 11 },
+        };
+
+        const DRINKS = {
+            '💧': { name: 'Вода', price: 0, minLevel: 0, xp: 10, priceLevel4: 1 },
+            '🍵': { name: 'Чай', price: 2, minLevel: 4, xp: 11 },
+            '🧃': { name: 'Сок', price: 3, minLevel: 4, xp: 11 },
+            '🥤': { name: 'Лимонад', price: 4, minLevel: 4, xp: 12 },
+        };
+
+        const PASTEL_COLORS = ['#f8f0e7', '#f0e6d3', '#e8dcc8', '#d4e8d4', '#c8e0e8', '#e8d4e8', '#f5d4d4', '#f5e8d4', '#d4d4d4', '#e8d4c8', '#d4e8d4'];
+        const BRIGHT_COLORS = ['#ff6b6b', '#ff9f43', '#feca57', '#54a0ff', '#5f27cd', '#1dd1a1', '#ff6b6b', '#ff9f43', '#feca57', '#54a0ff', '#5f27cd', '#1dd1a1'];
+        const DARK_COLORS = ['#2d3436', '#4a3728', '#1a1a2e', '#16213e', '#0f3460', '#1b1b1b', '#2d3436', '#4a3728', '#1a1a2e', '#16213e', '#0f3460', '#1b1b1b'];
+        const EMOJIS = ['🌟', '✨', '🌈', '🌸', '🌺', '🌻', '💫', '🎀', '🦋', '🌊', '☀️', '🌙'];
+        const AVATARS = ['🚀', '😊', '😎', '🤩', '🐱', '🐶', '🦊', '🐼', '🐨', '🦁', '🐯', '🐮', '🐷', '🐵', '🐔', '🐧', '🐦', '🐤', '🦄', '🐲', '🐳', '🐬', '🐟', '🐠', '🐡', '🦋', '🐞', '🌈', '⭐', '🌙', '🌸', '🌺', '🌻', '🌹', '🌷', '🌿', '🍀', '🎯', '🏆', '🎮', '🎨', '🎵', '💎'];
+
+        // ===== DOM =====
+        const $ = id => document.getElementById(id);
+        const screens = {
+            auth: $('authScreen'),
+            mainMenu: $('mainMenu'),
+            myPets: $('myPetsScreen'),
+            createPet: $('createPetScreen'),
+            choosePet: $('choosePetScreen'),
+            foodChoice: $('foodChoiceScreen'),
+            drinkChoice: $('drinkChoiceScreen'),
+            petCare: $('petCareScreen'),
+            petPassport: $('petPassportScreen'),
+            passportDesign: $('passportDesignScreen'),
+            profile: $('profileScreen'),
+            profileDesign: $('profileDesignScreen'),
+            friends: $('friendsScreen'),
+            friendProfile: $('friendProfileScreen'),
+            friendChat: $('friendChatScreen'),
+            invite: $('inviteScreen'),
+            coopCare: $('coopCareScreen'),
+            family: $('familyScreen'),
+            rarity: $('rarityScreen'),
+            admin: $('adminScreen'),
+            adminSend: $('adminSendCurrencyScreen'),
+            adminTake: $('adminTakeCurrencyScreen'),
+            adminPet: $('adminSelectPetScreen'),
+            adminLevel: $('adminLevelScreen'),
+            adminLevelUser: $('adminAddLevelUserScreen'),
+            searchProfile: $('friendSearchProfileScreen'),
+            games: $('gamesScreen'),
+            gameSnake: $('gameSnakeScreen'),
+            gameCatcher: $('gameCatcherScreen'),
+            game2048: $('game2048Screen'),
+            gameMemory: $('gameMemoryScreen'),
+            gameFeedCat: $('gameFeedCatScreen'),
+            gameShooting: $('gameShootingScreen'),
+            gameDice: $('gameDiceScreen'),
+            gameRainbow: $('gameRainbowScreen'),
+        };
+        const backBtn = $('backBtn');
+
+        // ===== СОСТОЯНИЕ =====
+        let state = {
+            currentUser: null,
+            currentPetId: null,
+            selectedPetType: null,
+            modalResolve: null,
+            adminTargetUser: null,
+            adminTargetPet: null,
+            coopPartner: null,
+            coopMyPet: null,
+            coopPartnerPet: null,
+            coopActive: false,
+            chatPartners: {},
+            coopChatMessages: [],
+            currentChatPartner: null,
+            inviteTarget: null,
+            drawingData: null,
+            gameEarnedCurrency: 0,
+            viewedGifts: new Set(),
+            userData: null,
+            userPets: [],
+            userFriends: [],
+            userFriendRequests: [],
+            userInvites: [],
+            userGifts: [],
+        };
+
+        // ===== ТОСТ =====
+        function showToast(text, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
+            toast.textContent = text;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== МОДАЛКА =====
+        function showModal(title, text) {
+            return new Promise((resolve) => {
+                $('modalTitle').textContent = title;
+                $('modalText').textContent = text;
+                $('modalOverlay').classList.add('show');
+                state.modalResolve = resolve;
+            });
+        }
+
+        $('modalConfirm').addEventListener('click', function() {
+            $('modalOverlay').classList.remove('show');
+            if (state.modalResolve) {
+                state.modalResolve(true);
+                state.modalResolve = null;
+            }
+        });
+        $('modalCancel').addEventListener('click', function() {
+            $('modalOverlay').classList.remove('show');
+            if (state.modalResolve) {
+                state.modalResolve(false);
+                state.modalResolve = null;
+            }
+        });
+
+        // ===== СОХРАНЕНИЕ В ЛОКАЛЬНОЕ ХРАНИЛИЩЕ (для кеша) =====
+        function saveLocalData(key, data) {
+            try {
+                localStorage.setItem('tamagochi_' + key, JSON.stringify(data));
+            } catch (e) {}
+        }
+
+        function loadLocalData(key) {
+            try {
+                const raw = localStorage.getItem('tamagochi_' + key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        // ===== РАБОТА С JSONBIN =====
+        async function loadUsersFromCloud() {
+            try {
+                const response = await fetch(JSONBIN_URL + '/latest', {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': JSONBIN_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.warn('JSONBin fetch error:', response.status);
+                    return { users: [] };
+                }
+                
+                const data = await response.json();
+                return data.record || { users: [] };
+            } catch (e) {
+                console.error('loadUsersFromCloud error:', e);
+                return { users: [] };
+            }
+        }
+
+        async function saveUsersToCloud(usersData) {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'X-Master-Key': JSONBIN_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(usersData)
+                });
+                
+                if (!response.ok) {
+                    console.error('JSONBin save error:', await response.text());
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                console.error('saveUsersToCloud error:', e);
+                return false;
+            }
+        }
+
+        // ===== ПОЛЬЗОВАТЕЛИ =====
+        async function createUser(username, password, avatar = '🚀') {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                
+                // Проверяем, существует ли пользователь
+                if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
+                    return { success: false, error: 'Пользователь с таким ником уже существует!' };
+                }
+                
+                const newUser = {
+                    username: username,
+                    password: password,
+                    avatar: avatar,
+                    currency: 0,
+                    friends: [],
+                    pets: [],
+                    created_at: new Date().toISOString(),
+                    viewedGifts: []
+                };
+                
+                users.push(newUser);
+                await saveUsersToCloud({ users: users });
+                
+                return { success: true, user: newUser };
+            } catch (e) {
+                console.error('createUser error:', e);
+                return { success: false, error: 'Ошибка создания аккаунта' };
+            }
+        }
+
+        async function getUser(username) {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+                return user || null;
+            } catch (e) {
+                console.error('getUser error:', e);
+                return null;
+            }
+        }
+
+        async function updateUser(username, updatedData) {
+            try {
+                const data = await loadUsersFromCloud();
+                const users = data.users || [];
+                const index = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+                
+                if (index === -1) return false;
+                
+                // Сохраняем старые данные, которые не должны измениться
+                const oldUser = users[index];
+                users[index] = {
+                    ...oldUser,
+                    ...updatedData
+                };
+                
+                await saveUsersToCloud({ users: users });
+                return true;
+            } catch (e) {
+                console.error('updateUser error:', e);
+                return false;
+            }
+        }
+
+        async function getAllUsers() {
+            try {
+                const data = await loadUsersFromCloud();
+                return data.users || [];
+            } catch (e) {
+                console.error('getAllUsers error:', e);
+                return [];
+            }
+        }
+
+        async function loginUser(username, password) {
+            try {
+                const user = await getUser(username);
+                if (!user) {
+                    return { success: false, error: 'Пользователь не найден!' };
+                }
+                if (user.password !== password) {
+                    return { success: false, error: 'Неверный пароль!' };
+                }
+                return { success: true, user: user };
+            } catch (e) {
+                console.error('loginUser error:', e);
+                return { success: false, error: 'Ошибка входа' };
+            }
+        }
+
+        // ===== ОСТАЛЬНЫЕ ФУНКЦИИ ИГРЫ =====
+        function getCurrentUserData() {
+            return state.userData;
+        }
+
+        function getCurrentPet() {
+            if (!state.userData || !state.userData.pets) return null;
+            return state.userData.pets.find(p => p.id === state.userData.currentPetId) || null;
+        }
+
+        function getPetById(id) {
+            if (!state.userData || !state.userData.pets) return null;
+            return state.userData.pets.find(p => p.id === id) || null;
+        }
+
+        function getRarityInfo(type) {
+            return PET_TYPES[type] || { emoji: '🥚', rarity: 'common', chance: 0, label: 'Яйцо', price: 0 };
+        }
+
+        function getRarityClass(rarity) {
+            const map = {
+                'common': 'rarity-common',
+                'uncommon': 'rarity-uncommon',
+                'rare': 'rarity-rare',
+                'epic': 'rarity-epic',
+                'legendary': 'rarity-legendary',
+                'secret': 'rarity-secret'
+            };
+            return map[rarity] || 'rarity-common';
+        }
+
+        function getRandomPetType() {
+            const r = Math.random() * 100;
+            let cumulative = 0;
+            for (const [type, info] of Object.entries(PET_TYPES)) {
+                cumulative += info.chance;
+                if (r <= cumulative) return type;
+            }
+            return 'собака';
+        }
+
+        function getEggPrice(data) {
+            const count = (data?.pets || []).length;
+            if (count < 2) return 0;
+            return 15;
+        }
+
+        function canCreateMore(data) {
+            if (!data) return false;
+            return (data.pets || []).length < 6;
+        }
+
+        function updateCurrency() {
+            const data = getCurrentUserData();
+            const amount = data?.currency ?? 0;
+            $('currencyAmount').textContent = amount;
+            if ($('profileScreen').style.display === 'block') {
+                $('profileCurrency').textContent = amount;
+            }
+            const adminBtn = $('adminAddBtn');
+            if (state.currentUser === ADMIN_USER) {
+                adminBtn.style.display = 'flex';
+            } else {
+                adminBtn.style.display = 'none';
+            }
+        }
+
+        function showScreen(screenName) {
+            Object.keys(screens).forEach(key => {
+                if (screens[key]) {
+                    screens[key].style.display = (key === screenName) ? 'block' : 'none';
+                }
+            });
+            const noBackScreens = ['mainMenu', 'auth'];
+            if (noBackScreens.includes(screenName)) {
+                backBtn.classList.remove('show');
+            } else {
+                backBtn.classList.add('show');
+            }
+            updateCurrency();
+            if (screenName === 'friends' || screenName === 'mainMenu') {
+                checkFriendUpdates();
+            }
+        }
+
+        // ===== АВТОРИЗАЦИЯ =====
+        let authMode = 'login';
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            $('loginTab').classList.toggle('active', mode === 'login');
+            $('registerTab').classList.toggle('active', mode === 'register');
+            $('authSubmitBtn').textContent = mode === 'login' ? '🔑 Войти' : '✨ Создать аккаунт';
+            $('authError').textContent = '';
+            $('authSuccess').textContent = '';
+        }
+
+        async function handleAuth() {
+            const username = $('authUsername').value.trim();
+            const password = $('authPassword').value.trim();
+            const errorEl = $('authError');
+            const successEl = $('authSuccess');
+            errorEl.textContent = '';
+            successEl.textContent = '';
+
+            if (!username || !password) {
+                errorEl.textContent = '❌ Заполните все поля!';
+                return;
+            }
+
+            // Защита админ-аккаунта
+            if (username === ADMIN_USER) {
+                if (password !== ADMIN_PASSWORD) {
+                    errorEl.textContent = '❌ Неверный пароль для этого аккаунта!';
+                    return;
+                }
+                // Админ уже есть в системе, просто загружаем его
+                const user = await getUser(username);
+                if (user) {
+                    state.userData = {
+                        ...user,
+                        pets: user.pets || [],
+                        friends: user.friends || [],
+                        viewedGifts: new Set(user.viewedGifts || [])
+                    };
+                    state.currentUser = username;
+                    successEl.textContent = '✅ Добро пожаловать, Админ!';
+                    setTimeout(() => enterMainMenu(), 500);
+                    return;
+                }
+            }
+
+            if (authMode === 'register') {
+                // ===== РЕГИСТРАЦИЯ =====
+                const existingUser = await getUser(username);
+                if (existingUser) {
+                    errorEl.textContent = '❌ Пользователь уже существует!';
+                    return;
+                }
+
+                const result = await createUser(username, password);
+                if (result.success) {
+                    state.userData = {
+                        ...result.user,
+                        pets: result.user.pets || [],
+                        friends: result.user.friends || [],
+                        viewedGifts: new Set(result.user.viewedGifts || [])
+                    };
+                    state.currentUser = username;
+                    successEl.textContent = '✅ Аккаунт создан!';
+                    setTimeout(() => enterMainMenu(), 500);
+                } else {
+                    errorEl.textContent = '❌ ' + result.error;
+                }
+            } else {
+                // ===== ВХОД =====
+                const result = await loginUser(username, password);
+                if (result.success) {
+                    state.userData = {
+                        ...result.user,
+                        pets: result.user.pets || [],
+                        friends: result.user.friends || [],
+                        viewedGifts: new Set(result.user.viewedGifts || [])
+                    };
+                    state.currentUser = username;
+                    successEl.textContent = '✅ Добро пожаловать!';
+                    setTimeout(() => enterMainMenu(), 500);
+                } else {
+                    errorEl.textContent = '❌ ' + result.error;
+                }
+            }
+        }
+
+        function enterMainMenu() {
+            showScreen('mainMenu');
+            const data = getCurrentUserData();
+            $('greetingText').textContent = `Привет, ${state.currentUser}! У вас ${data?.pets?.length || 0} питомцев.`;
+            updateCurrency();
+            renderPetList();
+        }
+
+        function logout() {
+            state.currentUser = null;
+            state.userData = null;
+            showScreen('auth');
+            $('authUsername').value = '';
+            $('authPassword').value = '';
+            $('authError').textContent = '';
+            $('authSuccess').textContent = '';
+            switchAuthMode('login');
+            updateCurrency();
+            showToast('👋 Вы вышли из аккаунта');
+        }
+
+        // ===== ФУНКЦИЯ ДРУЗЕЙ =====
+        async function checkFriendUpdates() {
+            // Просто заглушка для обновления
+            return true;
+        }
+
+        async function addFriend(username) {
+            if (!state.currentUser) return false;
+            const targetUser = await getUser(username);
+            if (!targetUser) {
+                showToast('❌ Пользователь не найден!', true);
+                return false;
+            }
+            if (username === state.currentUser) {
+                showToast('❌ Нельзя добавить самого себя!', true);
+                return false;
+            }
+            
+            const currentUserData = getCurrentUserData();
+            if (currentUserData.friends && currentUserData.friends.includes(username)) {
+                showToast('❌ Уже в друзьях!', true);
+                return false;
+            }
+            
+            // Добавляем друга для текущего пользователя
+            if (!currentUserData.friends) currentUserData.friends = [];
+            currentUserData.friends.push(username);
+            await updateUser(state.currentUser, {
+                friends: currentUserData.friends
+            });
+            
+            // Добавляем текущего пользователя в друзья к targetUser
+            if (!targetUser.friends) targetUser.friends = [];
+            if (!targetUser.friends.includes(state.currentUser)) {
+                targetUser.friends.push(state.currentUser);
+                await updateUser(username, {
+                    friends: targetUser.friends
+                });
+            }
+            
+            state.userData = await getUser(state.currentUser);
+            showToast(`✅ ${username} добавлен в друзья!`);
+            renderFriends();
+            return true;
+        }
+
+        // ===== РЕНДЕР ПИТОМЦЕВ =====
+        function renderPetList() {
+            const container = $('petList');
+            const data = getCurrentUserData();
+            if (!data || !data.pets || data.pets.length === 0) {
+                container.innerHTML = `<div class="empty-pets">😕 У вас пока нет питомцев<br>Создайте первого!</div>`;
+                return;
+            }
+            container.innerHTML = data.pets.map(pet => {
+                const info = getRarityInfo(pet.type);
+                return `
+                    <div class="pet-list-item" data-id="${pet.id}">
+                        <span class="emoji">${info.emoji}</span>
+                        <div class="info">${pet.name} <small>(${pet.type})</small></div>
+                        <span class="level-badge">ур. ${pet.level || 0}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            container.querySelectorAll('.pet-list-item').forEach(el => {
+                el.addEventListener('click', function() {
+                    const id = Number(this.dataset.id);
+                    const pet = getPetById(id);
+                    if (pet) {
+                        state.userData.currentPetId = id;
+                        openPetCare();
+                    }
+                });
+            });
+        }
+
+        // ===== РЕНДЕР ДРУЗЕЙ =====
+        async function renderFriends() {
+            const container = $('friendsList');
+            const data = getCurrentUserData();
+            if (!data || !data.friends || data.friends.length === 0) {
+                container.innerHTML = '<div class="empty-pets">😕 У вас пока нет друзей</div>';
+                return;
+            }
+            container.innerHTML = data.friends.map(friend => {
+                return `
+                    <div class="friend-item">
+                        <div class="info">${friend}</div>
+                        <div class="actions">
+                            <button class="btn-chat" data-username="${friend}">💬</button>
+                            <button class="btn-view" data-username="${friend}">👁️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.querySelectorAll('.btn-chat').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const username = this.dataset.username;
+                    showToast(`💬 Чат с ${username} пока не реализован`);
+                });
+            });
+            container.querySelectorAll('.btn-view').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const username = this.dataset.username;
+                    viewFriendProfile(username);
+                });
+            });
+        }
+
+        async function viewFriendProfile(username) {
+            const user = await getUser(username);
+            if (!user) {
+                showToast('❌ Пользователь не найден!', true);
+                return;
+            }
+            showScreen('friendProfile');
+            $('friendUsername').textContent = username;
+            $('friendAvatar').textContent = user.avatar || '🚀';
+            $('friendCurrency').textContent = user.currency || 0;
+            $('friendPetCount').textContent = (user.pets || []).length;
+            $('friendCreated').textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'неизвестно';
+        }
+
+        // ===== ПОИСК ДРУЗЕЙ =====
+        $('friendSearchBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            const username = $('friendSearchInput').value.trim();
+            const result = $('friendSearchResult');
+            if (!username) {
+                result.innerHTML = '❌ Введите юзернейм';
+                return;
+            }
+            if (username.toLowerCase() === state.currentUser.toLowerCase()) {
+                result.innerHTML = '❌ Это вы!';
+                return;
+            }
+            
+            const user = await getUser(username);
+            if (!user) {
+                result.innerHTML = '❌ Пользователь не найден!';
+                return;
+            }
+            
+            result.innerHTML = '';
+            showScreen('searchProfile');
+            $('searchProfileUsername').textContent = user.username;
+            $('searchProfileAvatar').textContent = user.avatar || '🚀';
+            $('searchProfilePetCount').textContent = (user.pets || []).length;
+            
+            const addBtn = $('searchProfileAddFriendBtn');
+            addBtn.dataset.username = user.username;
+            const data = getCurrentUserData();
+            if (data.friends && data.friends.includes(user.username)) {
+                addBtn.textContent = '✅ Уже в друзьях';
+                addBtn.disabled = true;
+                addBtn.style.opacity = '0.5';
+            } else {
+                addBtn.textContent = '➕ Добавить в друзья';
+                addBtn.disabled = false;
+                addBtn.style.opacity = '1';
+            }
+        });
+
+        $('searchProfileAddFriendBtn').addEventListener('click', function() {
+            const username = this.dataset.username;
+            if (username && !this.disabled) {
+                addFriend(username);
+            }
+        });
+
+        $('backFromSearchProfile').addEventListener('click', function() {
+            showScreen('friends');
+        });
+
+        // ===== УХОД ЗА ПИТОМЦЕМ =====
+        function openPetCare() {
+            const pet = getCurrentPet();
+            if (!pet) {
+                showScreen('myPets');
+                return;
+            }
+            showScreen('petCare');
+            renderPetCare();
+        }
+
+        function renderPetCare() {
+            const pet = getCurrentPet();
+            if (!pet) return;
+            const info = getRarityInfo(pet.type);
+            $('careEmoji').textContent = info.emoji || '🥚';
+            $('careName').textContent = pet.name || 'Питомец';
+            $('careLevel').textContent = `❤️ уровень ${pet.level || 0}`;
+            
+            const xp = pet.xp || 0;
+            const maxXp = pet.maxXp || 100;
+            const progress = Math.min(100, (xp / maxXp) * 100);
+            $('careXpFill').style.width = progress + '%';
+            $('careXpText').textContent = `опыт ${Math.floor(xp)} / ${maxXp}`;
+            
+            updateCurrency();
+        }
+
+        // ===== ФУНКЦИИ СОЗДАНИЯ ПИТОМЦА =====
+        function createPetObject(name, type) {
+            const now = Date.now();
+            return {
+                id: now + Math.random() * 10000,
+                name: name || 'Яйцо',
+                type: 'яйцо',
+                targetType: type || null,
+                xp: 0,
+                maxXp: 100,
+                level: 0,
+                wish: null,
+                wishTimer: null,
+                _wishStartTime: null,
+                evolved: false,
+                gamesUnlocked: false,
+                createdAt: now,
+                renameCount: 0,
+                inFamily: false,
+                passportDesign: {
+                    bgColor: '#fafff7',
+                    titleColor: '#2b7a4b',
+                    textColor: '#1d3b2a',
+                    emojis: [],
+                }
+            };
+        }
+
+        async function createNewPet() {
+            const data = getCurrentUserData();
+            if (!data) return;
+            if (!canCreateMore(data)) {
+                showToast('❌ Максимум 6 питомцев!', true);
+                return;
+            }
+            
+            const petName = $('petNameInput').value.trim() || 'Яйцо';
+            const pet = createPetObject(petName, state.selectedPetType || null);
+            
+            if (!data.pets) data.pets = [];
+            data.pets.push(pet);
+            data.currentPetId = pet.id;
+            
+            await updateUser(state.currentUser, {
+                pets: data.pets
+            });
+            
+            state.userData = await getUser(state.currentUser);
+            renderPetList();
+            updateCurrency();
+            showToast('✅ Яйцо создано! Ухаживайте, чтобы оно вылупилось!');
+            setTimeout(() => openPetCare(), 500);
+        }
+
+        // ===== ОБРАБОТЧИКИ СОБЫТИЙ =====
+        function addTapListener(el, handler) {
+            if (!el) return;
+            el.addEventListener('click', handler);
+        }
+
+        addTapListener($('loginTab'), () => switchAuthMode('login'));
+        addTapListener($('registerTab'), () => switchAuthMode('register'));
+        addTapListener($('authSubmitBtn'), handleAuth);
+        $('authPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
+        $('authUsername').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuth(); });
+
+        addTapListener($('toMyPetsBtn'), () => { showScreen('myPets'); renderPetList(); });
+        addTapListener($('toMainFromPets'), () => { enterMainMenu(); });
+        addTapListener($('toCreatePetBtn'), () => { showScreen('createPet'); });
+        addTapListener($('toMainFromCreate'), () => { enterMainMenu(); });
+        addTapListener($('toFriendsBtn'), () => { showScreen('friends'); renderFriends(); });
+        addTapListener($('backFromFriends'), () => { enterMainMenu(); });
+        addTapListener($('toProfileBtn'), () => { showScreen('profile'); });
+        addTapListener($('backFromProfile'), () => { enterMainMenu(); });
+        addTapListener($('toRarityBtn'), () => { showScreen('rarity'); });
+        addTapListener($('backFromRarity'), () => { enterMainMenu(); });
+        addTapListener($('toFamilyBtn'), () => { showScreen('family'); });
+        addTapListener($('backFromFamily'), () => { enterMainMenu(); });
+        addTapListener($('backFromCare'), () => { showScreen('myPets'); renderPetList(); });
+        addTapListener($('backFromFriendProfile'), () => { showScreen('friends'); renderFriends(); });
+        addTapListener($('logoutBtn'), logout);
+        addTapListener($('createPetConfirmBtn'), createNewPet);
+        addTapListener($('backBtn'), () => { enterMainMenu(); });
+
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        async function init() {
+            showScreen('auth');
+            switchAuthMode('login');
+            updateCurrency();
+            
+            // Проверяем, есть ли пользователь в localStorage
+            const savedUser = loadLocalData('current_user');
+            if (savedUser && savedUser.username) {
+                const user = await getUser(savedUser.username);
+                if (user) {
+                    state.userData = {
+                        ...user,
+                        pets: user.pets || [],
+                        friends: user.friends || [],
+                        viewedGifts: new Set(user.viewedGifts || [])
+                    };
+                    state.currentUser = savedUser.username;
+                    enterMainMenu();
+                    return;
+                }
+            }
+        }
+
+        // Сохраняем текущего пользователя при входе
+        const originalEnterMainMenu = enterMainMenu;
+        enterMainMenu = function() {
+            if (state.currentUser) {
+                saveLocalData('current_user', { username: state.currentUser });
+            }
+            originalEnterMainMenu();
+        };
+
+        // Заглушки для некоторых функций (чтобы не было ошибок)
+        function updateFriendsNotification() {}
+        function openPassport() {}
+        function openProfile() {}
+        function openRarity() {}
+        function openFamily() {}
+
+        // ЗАПУСК
+        init();
+
+    })();
+</script>
+</body>
+</html>
